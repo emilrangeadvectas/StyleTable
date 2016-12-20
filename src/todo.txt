@@ -1,0 +1,21 @@
+
+
+
+TODO:
+Set font color.
+Buttons and inputs should "save" their state. for example: "Bold" -> "Unbold".
+Always hide controls when in edit.
+Show all "pages" on same table (do not use paginator, make table grow)
+	Paginator: * set number of row per page
+			   * disable Back/Next button if reach start/end
+					# (some better feedback to tell reach end of list, or start of list if going backwards)
+Filter when click on attribut.
+A reset all style button
+					
+REFACTOR-TODO:
+	Work directly with the meta data of Qlik-object instead of this middle variable that requires load/save
+	A big refactor since no everything is in same "class" and stuff getting more complex?
+
+RE-THINK:
+	If new search. Reset style settings?
+	Refresh style of every element when anykind of repaint/interact even if it is not needed? It is more safe
