@@ -1,39 +1,17 @@
-define( ["jquery"],
-    function ( $,async ) {
-        'use strict';
 
+define( ["jquery","./styleSettings"],
+    function ( $, styleSettingsaa ) {
+        'use strict';
+		
 		var backendApi = null;
 		var _$element = null;
 		var _layout = null;
 		var defaultPageSize = 10;
 		var _numberOfRowsPerPage = defaultPageSize;
+		var _styleSettings;
 		
-		// -- Style Setting --
-		// -- A StyleSetting is a is mutable Object that has border, color, bold, and being saved in "global" scope. --
-		// -- A StyleSetting is saved on a index. Get StyleSetting by index to get and set props. 
-		//    If try get by index that is not bind to any style, style is being created, bind to index and returned --
-		var styleSettings = {}; //TODO: could be private
-
-		var StyleSetting = function() {
-			this.bold = false;
-			this.border = false;
-			this.color = null;		
-		} //TODO: could be private
-		
-		
-		function saveSettingsToBackend() {
-			backendApi.getProperties().then(function(r){
-				if(r.meta) {
-					backendApi.applyPatches([ {"qPath":"/meta","qOp":"replace","qValue":JSON.stringify(styleSettings)} ],false);
-				}
-				else {
-					backendApi.applyPatches([ {"qPath":"/meta","qOp":"add","qValue":JSON.stringify(styleSettings)} ],false);		
-				}
-			});
-		}
 
 		function _repaint($element,layout,paginator) {
-				loadSettingsFromBackend(function(){
 				
 					var requestPage = [{
 						qTop: paginator.top,
@@ -46,7 +24,6 @@ define( ["jquery"],
 						var dataPage = dataPages[0];
 						drawTable($element,getData(layout.qHyperCube,dataPage),layout.props.showStyleSettings);
 					});
-				});		
 		}
 		
 		function drawTable($element,data,showControlls) {
@@ -187,23 +164,6 @@ define( ["jquery"],
 				$element.append(rootDiv);		
 		}
 		
-		function loadSettingsFromBackend(callbackWhenDone) {
-			backendApi.getProperties().then(function(r){
-				if(r.meta) {
-					styleSettings = r.meta;
-				}
-				callbackWhenDone();
-			});
-		}
-		
-		function getStyleSettingByHash(hash) {
-				
-			if(styleSettings[hash]===undefined) {
-				styleSettings[hash] = new StyleSetting();
-			}
-			if(!styleSettings[hash]) throw "could not find and create a style on that hash: "+hash;
-			return styleSettings[hash];
-		}
 		// ---
 		
 		// -- getData --
@@ -255,30 +215,34 @@ define( ["jquery"],
 		var Row = function(tds,button,colorPicker,borderButton,buttonUnsetColor,index) {
 
 			var row = this;
-			this.styleSettings = getStyleSettingByHash(index);
+
 								
 			var tds = tds; // list of <TD>-tags found in this Row
 
 			this.refresh = function() {
-				for(var i=0; i<tds.length; i++) {
-					var td = tds[i];					
-					td.style.fontWeight = row.styleSettings.bold === true ? "bold" : "normal"
-					td.style.borderTop = row.styleSettings.border === true && ( (row.previousRow && row.previousRow.styleSettings.border !== true) || row.previousRow === null ) ? "1px solid #000" : "0"
-					td.style.borderBottom = row.styleSettings.border === true && row.nextRow && row.nextRow.styleSettings.border !== true ? "1px solid #000" : "0"
-					if(row.styleSettings.color!==null) {
-						td.style.backgroundColor = row.styleSettings.color;
+
+				_styleSettings.getStyleSettingByHash(index,function(data){
+
+					row.styleSettings = data;
+					for(var i=0; i<tds.length; i++) {
+						var td = tds[i];					
+						td.style.fontWeight = row.styleSettings.bold === true ? "bold" : "normal"
+//						td.style.borderTop = row.styleSettings.border === true && ( (row.previousRow && row.previousRow.styleSettings.border !== true) || row.previousRow === null ) ? "1px solid #000" : "0"
+	//					td.style.borderBottom = row.styleSettings.border === true && row.nextRow && row.nextRow.styleSettings.border !== true ? "1px solid #000" : "0"
+						if(row.styleSettings.color!==null) {
+							td.style.backgroundColor = row.styleSettings.color;
+						}
 					}
-				}
-				if(row.styleSettings.color!==null) {
-					$(colorPicker).val(row.styleSettings.color)
-				}
-				tds[0].style.borderLeft = row.styleSettings.border === true ? "1px solid #000" : "0";
-				tds[tds.length-1].style.borderRight = row.styleSettings.border === true ? "1px solid #000" : "0";
+					if(row.styleSettings.color!==null) {
+						$(colorPicker).val(row.styleSettings.color)
+					}
+					tds[0].style.borderLeft = row.styleSettings.border === true ? "1px solid #000" : "0";
+					tds[tds.length-1].style.borderRight = row.styleSettings.border === true ? "1px solid #000" : "0";
+				});
 			}
 			
 			$(button).click(function(){
-				row.styleSettings.bold = !row.styleSettings.bold;
-				saveSettingsToBackend();
+				_styleSettings.setStyleSettingByHash(index,"bold",true);
 				row.refresh();
 			});
 
@@ -351,7 +315,8 @@ define( ["jquery"],
 			},		
 			paint: function ( $element, layout ) {
 				backendApi = this.backendApi;
-
+				_styleSettings = styleSettingsaa.create(backendApi);
+				
 				if(layout.props.numberOfRowsPerPage !== undefined) _numberOfRowsPerPage = layout.props.numberOfRowsPerPage;
 				_$element = $element;
 				_layout = layout;
