@@ -3,9 +3,10 @@ define( ["jquery"],
         'use strict';
 
 		var backendApi = null;
-		var currentPageCursor = 0;
 		var _$element = null;
 		var _layout = null;
+		var defaultPageSize = 10;
+		var _numberOfRowsPerPage = defaultPageSize;
 		
 		// -- Style Setting --
 		// -- A StyleSetting is a is mutable Object that has border, color, bold, and being saved in "global" scope. --
@@ -31,14 +32,14 @@ define( ["jquery"],
 			});
 		}
 
-		function _repaint($element,layout) {
+		function _repaint($element,layout,paginator) {
 				loadSettingsFromBackend(function(){
 				
 					var requestPage = [{
-						qTop: currentPageCursor,
+						qTop: paginator.top,
 						qLeft: 0,
 						qWidth: 10,
-						qHeight: 9
+						qHeight: paginator.height
 					}];
 					backendApi.getData( requestPage ).then( function ( dataPages ) {
 						if( dataPages.length!==1 ) throw "can only draw one data page at a time";
@@ -77,16 +78,15 @@ define( ["jquery"],
 				rootDiv.appendChild(divPaginator);
 				var buttonPagiantor = document.createElement("BUTTON");
 				buttonPagiantor.onclick = function() {
-					currentPageCursor+=9;
-					_repaint(_$element,_layout);
+					_repaint(_$element,_layout,data.paginator.next);
 				};					
 				buttonPagiantor.appendChild(document.createTextNode("Next"));
 
 				var buttonPagiantorBack = document.createElement("BUTTON");
 				buttonPagiantorBack.appendChild(document.createTextNode("Back"));
+			//	buttonPagiantorBack.disabled = true;
 				buttonPagiantorBack.onclick = function() {
-					currentPageCursor-=9;
-					_repaint(_$element,_layout);
+					_repaint(_$element,_layout,data.paginator.back);
 				};					
 
 				divPaginator.appendChild(buttonPagiantorBack);
@@ -98,8 +98,10 @@ define( ["jquery"],
 				buttonPagiantor.style = paginatorButtonStyle;
 				buttonPagiantor.style.float = "RIGHT";
 				divPaginatorInfo.style = paginatorInfoStyle;
-				divPaginatorInfo.appendChild(document.createTextNode(data.paginator));
-				
+				divPaginatorInfo.appendChild(document.createTextNode(data.paginator.desc));
+
+				//buttonPagiantorBack.style.display = "none";
+
 				//Draw header
 				var tr = document.createElement("TR");
 
@@ -230,6 +232,7 @@ define( ["jquery"],
 			var start = page.qArea.qTop+1;
 			var end = page.qArea.qHeight+page.qArea.qTop;
 
+			console.log(_numberOfRowsPerPage);
 			
 			return {
 				"header": headers,
@@ -237,11 +240,16 @@ define( ["jquery"],
 				"numberOfColumns": headers.length,
 				"numberOfRows": rows,
 				"rowIdentifier": rowIdentifier,
-				"paginator": start + "-" + end
+				"paginator": {
+								"desc": start + "-" + end,
+								"next": {"top":page.qArea.qTop+_numberOfRowsPerPage,"height":_numberOfRowsPerPage},
+								"back": {"top":page.qArea.qTop-_numberOfRowsPerPage,"height":_numberOfRowsPerPage},
+						     }
 			};
 		}
 		// --
 
+				
 		// -- Row --
 		// -- Binds HTML-logic to StyleSettings --
 		var Row = function(tds,button,colorPicker,borderButton,buttonUnsetColor,index) {
@@ -330,6 +338,12 @@ define( ["jquery"],
 									label: "Hide"
 								}],
 								defaultValue: true	
+							},
+							numberOfRowsPerPage: {
+								type: "integer",
+								label: "Number of Rows per Page",
+								ref: "props.numberOfRowsPerPage",
+								defaultValue: defaultPageSize
 							}
 						}
 					}
@@ -337,9 +351,11 @@ define( ["jquery"],
 			},		
 			paint: function ( $element, layout ) {
 				backendApi = this.backendApi;
+
+				if(layout.props.numberOfRowsPerPage !== undefined) _numberOfRowsPerPage = layout.props.numberOfRowsPerPage;
 				_$element = $element;
 				_layout = layout;
-				_repaint(_$element,_layout);
+				_repaint(_$element,_layout,{"top":0,"height":_numberOfRowsPerPage});
 			}
         };
     } );
