@@ -6,13 +6,6 @@ define( ["jquery"],
 		var currentPageCursor = 0;
 		var _$element = null;
 		var _layout = null;
-		/*
-		
-			TODO: font color.
-			Buttons and inputs should "save" their state. "Bold" -> "Unbold", Keep color in input field.
-			Always hide controlls when in edit.
-			me
-		*/
 		
 		// -- Style Setting --
 		// -- A StyleSetting is a is mutable Object that has border, color, bold, and being saved in "global" scope. --
