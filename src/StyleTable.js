@@ -92,6 +92,11 @@ define( ["jquery","./styleSettings"],
 				}
 				
 				var rows = [];
+				
+				var buttons = []; // Controller button for bold
+				var inputColors = []; // Controller color picker
+				var buttonBorders = []; // Controller button for border
+				
 				//Draw body and make Row objects
 				for(var i=0; i<data.numberOfRows; i++) {
 					var tr = document.createElement("TR");
@@ -136,6 +141,10 @@ define( ["jquery","./styleSettings"],
 						tdController.appendChild(buttonBorder);
 						buttonBorder.style = inputStyle;
 
+						buttons[i] = button;
+						buttonBorders[i] = buttonBorder;
+						inputColors[i] = inputColor;
+						
 						tr.appendChild(tdController);
 
 					}
@@ -161,7 +170,11 @@ define( ["jquery","./styleSettings"],
 						var aboveStyle = i===0 ? null : styleSettings[rows[i-1].hash];
 						var belowStyle = i===rows.length-1 ? null : styleSettings[rows[i+1].hash];
 						rows[i].updateStyle(styleSettings[rows[i].hash],aboveStyle,belowStyle);
-					}
+
+							buttons[i].style.fontWeight = styleSettings[rows[i].hash].bold === true ? "bold" : "normal";
+							buttonBorders[i].style.fontWeight = styleSettings[rows[i].hash].border === true ? "bold" : "normal";
+							inputColors[i].value = styleSettings[rows[i].hash].color === null ? "#000000" : styleSettings[rows[i].hash].color;
+						}
 				
 				});
 				
