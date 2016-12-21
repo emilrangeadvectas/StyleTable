@@ -1,6 +1,6 @@
 
 define( ["jquery","./styleSettings"],
-    function ( $, styleSettingsaa ) {
+    function ( $, styleSettings ) {
         'use strict';
 		
 		var backendApi = null;
@@ -156,9 +156,14 @@ define( ["jquery","./styleSettings"],
 					rows[i].previousRow = i==0 ? null : rows[i-1];
 				}
 
-				for(var i=0; i<rows.length; i++) {
-					rows[i].refresh();
-				}
+				_styleSettings.getStyleSettings(function(styleSettings){
+					for(var i=0; i<rows.length; i++) {
+						var aboveStyle = i===0 ? null : styleSettings[rows[i-1].hash];
+						var belowStyle = i===rows.length-1 ? null : styleSettings[rows[i+1].hash];
+						rows[i].updateStyle(styleSettings[rows[i].hash],aboveStyle,belowStyle);
+					}
+				
+				});
 				
 				rootDiv.appendChild(table);
 				$element.append(rootDiv);		
@@ -191,8 +196,6 @@ define( ["jquery","./styleSettings"],
 			
 			var start = page.qArea.qTop+1;
 			var end = page.qArea.qHeight+page.qArea.qTop;
-
-			console.log(_numberOfRowsPerPage);
 			
 			return {
 				"header": headers,
@@ -215,60 +218,43 @@ define( ["jquery","./styleSettings"],
 		var Row = function(tds,button,colorPicker,borderButton,buttonUnsetColor,index) {
 
 			var row = this;
-
 								
 			var tds = tds; // list of <TD>-tags found in this Row
-
-			this.refresh = function() {
-
-				_styleSettings.getStyleSettingByHash(index,function(data){
-
-					row.styleSettings = data;
-					for(var i=0; i<tds.length; i++) {
-						var td = tds[i];					
-						td.style.fontWeight = row.styleSettings.bold === true ? "bold" : "normal"
-//						td.style.borderTop = row.styleSettings.border === true && ( (row.previousRow && row.previousRow.styleSettings.border !== true) || row.previousRow === null ) ? "1px solid #000" : "0"
-	//					td.style.borderBottom = row.styleSettings.border === true && row.nextRow && row.nextRow.styleSettings.border !== true ? "1px solid #000" : "0"
-						if(row.styleSettings.color!==null) {
-							td.style.backgroundColor = row.styleSettings.color;
-						}
+			this.hash = index;
+			this.updateStyle = function(s,styleAbove,styleBelow) {
+						
+				for(var i=0; i<tds.length; i++) {
+					var td = tds[i];					
+					td.style.backgroundColor = s.color;
+					td.style.fontWeight = s.bold === true ? "bold" : "normal"
+					if(s.border === true && styleAbove!==null) {
+						td.style.borderTop = styleAbove.border!==true ? "1px solid #000" : "";
 					}
-					if(row.styleSettings.color!==null) {
-						$(colorPicker).val(row.styleSettings.color)
+
+					if(s.border === true && styleBelow!==null) {
+						td.style.borderBottom = styleBelow.border!==true ? "1px solid #000" : "";
 					}
-					tds[0].style.borderLeft = row.styleSettings.border === true ? "1px solid #000" : "0";
-					tds[tds.length-1].style.borderRight = row.styleSettings.border === true ? "1px solid #000" : "0";
-				});
-			}
+					
+				}
+				tds[tds.length-1].style.borderRight = s.border === true ? "1px solid #000" : "0";
+				tds[0].style.borderLeft = s.border === true ? "1px solid #000" : "0";
+			};
 			
 			$(button).click(function(){
-				_styleSettings.setStyleSettingByHash(index,"bold",true);
-				row.refresh();
+				_styleSettings.switchBold(index);
 			});
 
 			$(borderButton).click(function(){
-				row.styleSettings.border = !row.styleSettings.border;
-				saveSettingsToBackend();
-				row.refresh();
-				if(row.previousRow!==null) {
-					row.previousRow.refresh();
-				}
-				if(row.nextRow!==null) {
-					row.nextRow.refresh();
-				}
+				_styleSettings.switchBorder(index);
 			});
 			
 			$(colorPicker).change(function(){
-				row.styleSettings.color = $(this).val();
-				saveSettingsToBackend();
-				row.refresh();
+				_styleSettings.setColor(index,$(this).val());
 			});
 
 			$(buttonUnsetColor).click(function(){
-				row.styleSettings.color = null;
-				saveSettingsToBackend();
+				_styleSettings.unsetColor(index);
 				$(colorPicker).val("#000000");
-				row.refresh();
 			});
 			
 		}	
@@ -315,7 +301,7 @@ define( ["jquery","./styleSettings"],
 			},		
 			paint: function ( $element, layout ) {
 				backendApi = this.backendApi;
-				_styleSettings = styleSettingsaa.create(backendApi);
+				_styleSettings = styleSettings.create(backendApi);
 				
 				if(layout.props.numberOfRowsPerPage !== undefined) _numberOfRowsPerPage = layout.props.numberOfRowsPerPage;
 				_$element = $element;
