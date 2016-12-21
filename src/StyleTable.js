@@ -1,6 +1,6 @@
 
-define( ["jquery","./styleSettings"],
-    function ( $, styleSettings ) {
+define( ["jquery","./styleSettings","./main"],
+    function ( $, styleSettings, mainFactory ) {
         'use strict';
 		
 		var backendApi = null;
@@ -9,7 +9,6 @@ define( ["jquery","./styleSettings"],
 		var defaultPageSize = 10;
 		var _numberOfRowsPerPage = defaultPageSize;
 		var _styleSettings;
-		
 
 		function _repaint($element,layout,paginator) {
 				
@@ -29,7 +28,6 @@ define( ["jquery","./styleSettings"],
 		function drawTable($element,data,showControlls) {
 				var thStyle = "padding: 4px; font-size:16px; text-align:left; border-bottom: 1px solid #555";
 				var tdStyle = "padding: 4px; font-size:14px; text-align:left";
-				var inputStyle = "padding:1px;margin:0; height:20px; border:0;vertical-align:top;margin-left:3px";
 				var paginatorButtonStyle = "font-size:18px;";
 				var paginatorButtonStyle = "font-size:18px;";
 				var paginatorInfoStyle =  "margin: 0 auto 0 auto; width:300px; text-align:center; font-size:18px";
@@ -112,40 +110,7 @@ define( ["jquery","./styleSettings"],
 					}
 
 					if(showControlls) {
-						var tdController = document.createElement("TD");
 
-						// "Set to bold"-button
-						var button = document.createElement("BUTTON");
-						var textBold = document.createTextNode("Bold")
-						button.appendChild(textBold);
-						tdController.appendChild(button);
-						button.style = inputStyle;
-
-						// Background color picker
-						var inputColor = document.createElement("INPUT");
-						inputColor.type = "color";
-						tdController.appendChild(inputColor);
-						inputColor.style = inputStyle;
-
-						// "Unset color"-button
-						var buttonUnsetColor = document.createElement("BUTTON");
-						var textUnsetColor = document.createTextNode("Unset color");
-						buttonUnsetColor.appendChild(textUnsetColor);
-						tdController.appendChild(buttonUnsetColor);
-						buttonUnsetColor.style = inputStyle;
-
-						// "Border"-button
-						var buttonBorder = document.createElement("BUTTON");
-						var textBorder = document.createTextNode("Border")
-						buttonBorder.appendChild(textBorder);
-						tdController.appendChild(buttonBorder);
-						buttonBorder.style = inputStyle;
-
-						buttons[i] = button;
-						buttonBorders[i] = buttonBorder;
-						inputColors[i] = inputColor;
-						
-						tr.appendChild(tdController);
 
 					}
 					table.appendChild(tr);
@@ -184,93 +149,12 @@ define( ["jquery","./styleSettings"],
 		
 		// ---
 		
-		// -- getData --
-		// -- Simplify hybercube with simple interface --
-		// -- TODO: validation, NOTE: have a function like this makes debug easier. Can return "hardcoded" data here.
-		// -- NOTE: good to have a "wrapper" method like this if want to fetch data from other sources
-		function getData(hc,page) {
-		
-			var rows = page.qMatrix.length;
-			var rowIdentifier = new Array();
-			var headers = new Array();
-			for (var i = 0; i < hc.qDimensionInfo.length; i++) {
-				headers.push(hc.qDimensionInfo[i].qFallbackTitle);
-			}
-			for (var i = 0; i < hc.qMeasureInfo.length; i++) {
-				headers.push(hc.qMeasureInfo[i].qFallbackTitle);
-			}
 
-			for(var i=0; i<page.qMatrix.length; i++) {
-				rowIdentifier[i] = "";
-				for (var u = 0; u < hc.qDimensionInfo.length; u++) {
-					rowIdentifier[i] += "|"+u+"|"+page.qMatrix[i][u].qText; //TODO: make a JSON object and stringify. This solution has a VERY small chance of not working. JSON should work better
-				}
-			}
-			
-			var start = page.qArea.qTop+1;
-			var end = page.qArea.qHeight+page.qArea.qTop;
-			
-			return {
-				"header": headers,
-				"body": page.qMatrix,
-				"numberOfColumns": headers.length,
-				"numberOfRows": rows,
-				"rowIdentifier": rowIdentifier,
-				"paginator": {
-								"desc": start + "-" + end,
-								"next": {"top":page.qArea.qTop+_numberOfRowsPerPage,"height":_numberOfRowsPerPage},
-								"back": {"top":page.qArea.qTop-_numberOfRowsPerPage,"height":_numberOfRowsPerPage},
-						     }
-			};
-		}
-		// --
 
 				
 		// -- Row --
 		// -- Binds HTML-logic to StyleSettings --
-		var Row = function(tds,button,colorPicker,borderButton,buttonUnsetColor,index) {
-
-			var row = this;
-								
-			var tds = tds; // list of <TD>-tags found in this Row
-			this.hash = index;
-			this.updateStyle = function(s,styleAbove,styleBelow) {
-						
-				for(var i=0; i<tds.length; i++) {
-					var td = tds[i];					
-					td.style.backgroundColor = s.color;
-					td.style.fontWeight = s.bold === true ? "bold" : "normal"
-					if(s.border === true && styleAbove!==null) {
-						td.style.borderTop = styleAbove.border!==true ? "1px solid #000" : "";
-					}
-
-					if(s.border === true && styleBelow!==null) {
-						td.style.borderBottom = styleBelow.border!==true ? "1px solid #000" : "";
-					}
-					
-				}
-				tds[tds.length-1].style.borderRight = s.border === true ? "1px solid #000" : "0";
-				tds[0].style.borderLeft = s.border === true ? "1px solid #000" : "0";
-			};
-			
-			$(button).click(function(){
-				_styleSettings.switchBold(index);
-			});
-
-			$(borderButton).click(function(){
-				_styleSettings.switchBorder(index);
-			});
-			
-			$(colorPicker).change(function(){
-				_styleSettings.setColor(index,$(this).val());
-			});
-
-			$(buttonUnsetColor).click(function(){
-				_styleSettings.unsetColor(index);
-				$(colorPicker).val("#000000");
-			});
-			
-		}	
+	
 		// --
 		
         return {
@@ -313,13 +197,9 @@ define( ["jquery","./styleSettings"],
 				}
 			},		
 			paint: function ( $element, layout ) {
-				backendApi = this.backendApi;
-				_styleSettings = styleSettings.create(backendApi);
-				
-				if(layout.props.numberOfRowsPerPage !== undefined) _numberOfRowsPerPage = layout.props.numberOfRowsPerPage;
-				_$element = $element;
-				_layout = layout;
-				_repaint(_$element,_layout,{"top":0,"height":_numberOfRowsPerPage});
+				var main = mainFactory.create(this.backendApi,$element, layout,!layout.props.showStyleSettings);
+				//main.scrollMode(5);
+				main.paginatorMode( layout.props.numberOfRowsPerPage===undefined ? defaultPageSize : layout.props.numberOfRowsPerPage);
 			}
         };
     } );
