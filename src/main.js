@@ -14,7 +14,6 @@ define( ["./styleSettings","./scrolldownTable"], function (styleSettings,Scrolld
 			var row = this;
 								
 			var tds = Array.prototype.slice.call( tr.getElementsByTagName("td") );
-			console.log(tds);
 			this.hash = index;
 			this.updateStyle = function(s,styleAbove,styleBelow) {
 						
@@ -114,8 +113,6 @@ define( ["./styleSettings","./scrolldownTable"], function (styleSettings,Scrolld
 		
 		var getRawBodyRows = function(data) {
 			var tdStyle = "padding: 4px; font-size:14px; text-align:left";
-
-			console.log(data);
 			var qMatrix = data.qMatrix;
 			var trs = {}
 			for(var i=0; i<qMatrix.length; i++) {
@@ -162,7 +159,7 @@ define( ["./styleSettings","./scrolldownTable"], function (styleSettings,Scrolld
 			return table;
 		};
 
-		var load = function(top,height,table,callbackWhenDone) {
+		var load = function(top,height,table,callbackWhenDone,aboveRow) {
 			var requestPages = null;
 			requestPages = [{
 				qTop: top,
@@ -176,13 +173,15 @@ define( ["./styleSettings","./scrolldownTable"], function (styleSettings,Scrolld
 				var trs = getRawBodyRows(dataPage);
 				
 				_styleSettings.getStyleSettings(function(c){
-				var rows = [];
+				var rows = aboveRow ? [ aboveRow ] : [];
+                var lastTr = undefined;
 				for(var i in trs) {
 					var tr = trs[i];
 					var row = buildController(tr,i,c[i], hideControlls );
 					if(row.tdController)tr.appendChild( row.tdController )
 					rows.push(row);
 					table.appendChild(tr);
+                    lastTr = tr;
 				}
 				
 				for(var i=0; i<rows.length; i++) {
@@ -192,7 +191,7 @@ define( ["./styleSettings","./scrolldownTable"], function (styleSettings,Scrolld
 				}
 				
 				var qArea = dataPage.qArea;
-				callbackWhenDone(qArea.qTop+qArea.qHeight,qArea.qTop-height,""+(qArea.qTop+1)+"-"+(qArea.qTop+qArea.qHeight),qArea.qHeight===0);
+				callbackWhenDone(qArea.qTop+qArea.qHeight,qArea.qTop-height,""+(qArea.qTop+1)+"-"+(qArea.qTop+qArea.qHeight),qArea.qHeight===0,rows[rows.length-1]);
 				});
 			});	
 		}
@@ -248,11 +247,13 @@ define( ["./styleSettings","./scrolldownTable"], function (styleSettings,Scrolld
 		}
 		
 		this.scrollMode = function(rowsPerPage) {
+            var lastRow = null;
             var elements = redraw($element,layout);
             var scrolldownTable = new ScrolldownTable(rowsPerPage, elements.rootDiv, function(top,rowsPerPage,callback){
-                load(top,rowsPerPage,elements.table,function(next,x,y,end){
+                load(top,rowsPerPage,elements.table,function(next,x,y,end,_lastRow){
+                    lastRow = _lastRow;
                     callback(next,end);
-				});               
+				},lastRow);               
             });
 		}
 		
