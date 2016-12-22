@@ -253,7 +253,6 @@ define( ["./styleSettings"], function (styleSettings) {
 				button.disabled = true;
 				load(top,rowsPerPage,elements.table,function(next){
 					top = next;
-					console.log(top);
 					button.disabled = false;
 				});
 			};
