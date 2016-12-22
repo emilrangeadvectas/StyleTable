@@ -198,6 +198,8 @@ define( ["./styleSettings","./scrolldownTable"], function (styleSettings,Scrolld
 
 		this.paginatorMode = function(rowsPerPage) {
 
+            /** THIS SHOULD BE MOVE TO OWN "CLASS", THIS HAS ONLY PAGINATOR RELATED **/
+        
 			var paginatorButtonStyle = "font-size:18px;";
 			var paginatorInfoStyle =  "margin: 0 auto 0 auto; width:300px; text-align:center; font-size:18px";
 			var _next = 0;
@@ -244,6 +246,9 @@ define( ["./styleSettings","./scrolldownTable"], function (styleSettings,Scrolld
 			divPaginatorInfo.style = paginatorInfoStyle;
 			
 			elements.rootDiv.appendChild(divPaginator);
+            
+            /***/
+            
 		}
 		
 		this.scrollMode = function(rowsPerPage) {
