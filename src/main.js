@@ -1,4 +1,4 @@
-define( ["./styleSettings"], function (styleSettings) {
+define( ["./styleSettings","./scrolldownTable"], function (styleSettings,ScrolldownTable) {
 	'use strict';
 
 	var main = function(backendApi,$element,layout,hideControlls) {
@@ -248,53 +248,12 @@ define( ["./styleSettings"], function (styleSettings) {
 		}
 		
 		this.scrollMode = function(rowsPerPage) {
-			var top = 0;
-            var _end = false;
-			var elements = redraw($element,layout);
-            var reachedBottom = false;
-            
-            var _load = function() {
-            if(_end) return;
-            if(top===undefined) throw "";
-
-                var _top = top;
-                _top = undefined;
-				load(top,rowsPerPage,elements.table,function(next,x,y,end){
-
-                    console.log(end);
-                    top = next;
-                    _end = end;
-				});            
-            }
-            _load();
-
-            setInterval(function(){
-
-
-            
-                if(reachedBottom) {
-                    reachedBottom = false;
-                    _load();
-                }
-                else if(  $(elements.rootDiv).innerHeight() === $(elements.rootDiv)[0].scrollHeight ) {
-                    _load();
-                }
-            
-            }, 1250);
-
-            $(elements.rootDiv).on('scroll', function() {
-                        
-                if($(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight) {
-                    reachedBottom = true;
-                }
+            var elements = redraw($element,layout);
+            var scrolldownTable = new ScrolldownTable(rowsPerPage, elements.rootDiv, function(top,rowsPerPage,callback){
+                load(top,rowsPerPage,elements.table,function(next,x,y,end){
+                    callback(next,end);
+				});               
             });
-            
-			var loadMoreButton = document.createElement("BUTTON");
-			loadMoreButton.appendChild(document.createTextNode("Load more"));
-			loadMoreButton.onclick = function(){
-                _load();
-			};
-			elements.rootDiv.appendChild(loadMoreButton);
 		}
 		
 		var redraw = function($element,layout) {
@@ -307,13 +266,6 @@ define( ["./styleSettings"], function (styleSettings) {
 			rootDiv.style.width = canvasWidth+"px";
 			rootDiv.style.height = canvasHeight+"px";
 			rootDiv.style.overflowY = "scroll";
-
-            /*
-            $(rootDiv).on('scroll', function() {
-                if($(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight) {
-                    alert('end reached');
-                }
-            });*/
             
 			var table = getRawTable(layout);
 			table.style.width = (canvasWidth-10)+"px";
