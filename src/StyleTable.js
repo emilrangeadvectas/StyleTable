@@ -60,7 +60,6 @@ define( ["jquery","./styleSettings","./main"],
 				}
 			},		
 			paint: function ( $element, layout ) {
-                console.log("repaint!");
 				var main = mainFactory.create(this.backendApi,$element, layout,!layout.props.showStyleSettings);
                 var rowPerPage = layout.props.numberOfRowsPerPage===undefined ? defaultPageSize : layout.props.numberOfRowsPerPage;
                 if(layout.props.pageHandler===1) {

@@ -80,12 +80,14 @@ define( ["./styleSettings"], function (styleSettings) {
 				button.appendChild(textBold);
 				tdController.appendChild(button);
 				button.style = inputStyle;
+                button.style.fontWeight = style.bold===true ? "bold" : "normal";
 
 				// Background color picker
 				var inputColor = document.createElement("INPUT");
 				inputColor.type = "color";
 				tdController.appendChild(inputColor);
 				inputColor.style = inputStyle;
+				inputColor.value = style.color;
 
 				// "Unset color"-button
 				var buttonUnsetColor = document.createElement("BUTTON");
@@ -100,6 +102,8 @@ define( ["./styleSettings"], function (styleSettings) {
 				buttonBorder.appendChild(textBorder);
 				tdController.appendChild(buttonBorder);
 				buttonBorder.style = inputStyle;
+                buttonBorder.style.fontWeight = style.border===true ? "bold" : "normal";
+
 			}
 			var row = new Row(tr,button,inputColor,buttonBorder,buttonUnsetColor,  hash  );
 			row.style = style;
@@ -188,7 +192,7 @@ define( ["./styleSettings"], function (styleSettings) {
 				}
 				
 				var qArea = dataPage.qArea;
-				callbackWhenDone(qArea.qTop+qArea.qHeight,qArea.qTop-height,""+(qArea.qTop+1)+"-"+(qArea.qTop+qArea.qHeight));
+				callbackWhenDone(qArea.qTop+qArea.qHeight,qArea.qTop-height,""+(qArea.qTop+1)+"-"+(qArea.qTop+qArea.qHeight),qArea.qHeight===0);
 				});
 			});	
 		}
@@ -245,16 +249,50 @@ define( ["./styleSettings"], function (styleSettings) {
 		
 		this.scrollMode = function(rowsPerPage) {
 			var top = 0;
+            var _end = false;
 			var elements = redraw($element,layout);
+            var reachedBottom = false;
+            
+            var _load = function() {
+            if(_end) return;
+            if(top===undefined) throw "";
+
+                var _top = top;
+                _top = undefined;
+				load(top,rowsPerPage,elements.table,function(next,x,y,end){
+
+                    console.log(end);
+                    top = next;
+                    _end = end;
+				});            
+            }
+            _load();
+
+            setInterval(function(){
+
+
+            
+                if(reachedBottom) {
+                    reachedBottom = false;
+                    _load();
+                }
+                else if(  $(elements.rootDiv).innerHeight() === $(elements.rootDiv)[0].scrollHeight ) {
+                    _load();
+                }
+            
+            }, 1250);
+
+            $(elements.rootDiv).on('scroll', function() {
+                        
+                if($(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight) {
+                    reachedBottom = true;
+                }
+            });
+            
 			var loadMoreButton = document.createElement("BUTTON");
 			loadMoreButton.appendChild(document.createTextNode("Load more"));
 			loadMoreButton.onclick = function(){
-				var button = this;
-				button.disabled = true;
-				load(top,rowsPerPage,elements.table,function(next){
-					top = next;
-					button.disabled = false;
-				});
+                _load();
 			};
 			elements.rootDiv.appendChild(loadMoreButton);
 		}
@@ -270,6 +308,13 @@ define( ["./styleSettings"], function (styleSettings) {
 			rootDiv.style.height = canvasHeight+"px";
 			rootDiv.style.overflowY = "scroll";
 
+            /*
+            $(rootDiv).on('scroll', function() {
+                if($(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight) {
+                    alert('end reached');
+                }
+            });*/
+            
 			var table = getRawTable(layout);
 			table.style.width = (canvasWidth-10)+"px";
 			rootDiv.appendChild(table);			
