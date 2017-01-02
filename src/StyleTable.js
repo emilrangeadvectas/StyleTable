@@ -1,6 +1,6 @@
 
 define( ["jquery","./styleSettings","./main"],
-    function ( $, styleSettings, mainFactory ) {
+    function ( $, styleSettings, Main ) {
         'use strict';
 
 		var defaultPageSize = 10;
@@ -60,7 +60,7 @@ define( ["jquery","./styleSettings","./main"],
 				}
 			},		
 			paint: function ( $element, layout ) {
-				var main = mainFactory.create(this.backendApi,$element, layout,!layout.props.showStyleSettings);
+				var main = new Main(this.backendApi,$element, layout,!layout.props.showStyleSettings);
                 var rowPerPage = layout.props.numberOfRowsPerPage===undefined ? defaultPageSize : layout.props.numberOfRowsPerPage;
                 if(layout.props.pageHandler===1) {
                     main.scrollMode(rowPerPage);
