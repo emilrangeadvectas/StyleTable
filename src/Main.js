@@ -1,4 +1,4 @@
-define( ["./styleSettings","./scrolldownTable"], function (StyleSettings,ScrolldownTable) {
+define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,ScrolldownHandler) {
 	'use strict';
 
 	var Main = function(backendApi,$element,layout,hideControlls) {
@@ -75,13 +75,13 @@ define( ["./styleSettings","./scrolldownTable"], function (StyleSettings,Scrolld
 			return table;
 		};
         
-        var htmlDataRow = function(qMatrix,i) {
+        var htmlDataRow = function(rowData) {
 
             var tdStyle = "padding: 4px; font-size:14px; text-align:left";
             var tr = document.createElement("TR");
-			for(var u=0; u<qMatrix[i].length; u++) {
+			for(var u=0; u<rowData.length; u++) {
 				var td = document.createElement("TD");
-				var elementText = document.createTextNode(qMatrix[i][u].qText)
+				var elementText = document.createTextNode(rowData[u].qText)
 				tr.appendChild(td);
 				td.appendChild(elementText);
 				td.style = tdStyle;
@@ -105,6 +105,7 @@ define( ["./styleSettings","./scrolldownTable"], function (StyleSettings,Scrolld
         
         /*  -- */
 		
+        // RowController handles control panel logic form style settings and updating style on html rows
 		var RowController = function(tr,identify,styleSetting,index) {
 
 			var row = this;
@@ -123,7 +124,7 @@ define( ["./styleSettings","./scrolldownTable"], function (StyleSettings,Scrolld
             
 			this.updateStyle = function() {
                         
-                var s = styleSetting;
+                styleSetting;
                 
                 var aboveRowController = getAboveRowController();
                 var belowRowController = getBelowRowController();
@@ -133,23 +134,24 @@ define( ["./styleSettings","./scrolldownTable"], function (StyleSettings,Scrolld
                 
 				for(var i=0; i<tds.length; i++) {
 					var td = tds[i];					
-					td.style.backgroundColor = s.color;
-					td.style.fontWeight = s.bold === true ? "bold" : "normal"
-					if(s.border === true && styleAbove!==null) {
+					td.style.backgroundColor = styleSetting.color;
+					td.style.fontWeight = styleSetting.bold === true ? "bold" : "normal"
+					if(styleSetting.border === true && styleAbove!==null) {
 						td.style.borderTop = styleAbove.border!==true ? "1px solid #000" : "";
 					}
 
-					if(s.border === true && styleBelow!==null) {
+					if(styleSetting.border === true && styleBelow!==null) {
 						td.style.borderBottom = styleBelow.border!==true ? "1px solid #000" : "";
 					}
 					
 				}
-				tds[tds.length-1].style.borderRight = s.border === true ? "1px solid #000" : "0";
-				tds[0].style.borderLeft = s.border === true ? "1px solid #000" : "0";
-                console.log(controlPanel);
-                controlPanel.boldButton.style.fontWeight = styleSetting.bold===true ? "bold" : "normal";
-                controlPanel.borderButton.style.fontWeight = styleSetting.border===true ? "bold" : "normal";
-                controlPanel.colorInput.value = styleSetting.color ? styleSetting.color :"#000000";
+				tds[tds.length-1].style.borderRight = styleSetting.border === true ? "1px solid #000" : "0";
+				tds[0].style.borderLeft = styleSetting.border === true ? "1px solid #000" : "0";
+                if(controlPanel!==null) {
+                    controlPanel.boldButton.style.fontWeight = styleSetting.bold===true ? "bold" : "normal";
+                    controlPanel.borderButton.style.fontWeight = styleSetting.border===true ? "bold" : "normal";
+                    controlPanel.colorInput.value = styleSetting.color ? styleSetting.color :"#000000";
+                }
             };
 			
             this.addControlPanel = function(_controlPanel) {
@@ -174,7 +176,13 @@ define( ["./styleSettings","./scrolldownTable"], function (StyleSettings,Scrolld
             }
 			
 		}
-		
+
+        // Data Row hold the html data for a row and what identify-hash the row has
+		var DataRow = function(tr,identify) {
+            this.tr = tr;        
+            this.identify = identify;
+        }
+ 		
 		var getHeadersFromLayout = function(layout) {
 			var headers = [];
 			var hc = layout.qHyperCube;
@@ -187,45 +195,50 @@ define( ["./styleSettings","./scrolldownTable"], function (StyleSettings,Scrolld
 			return headers;
 		}
 		
-        var calcIdentifyHash = function(t) {
+        var calcIdentifyHash = function(rowData) {
             var hash = "";
             for(var u=0; u<getHeadersFromLayout.length; u++) {
                 var us = ""+u; 
-                hash +=  "|"+us+"|"+t[u].qText;
+                hash +=  "|"+us+"|"+rowData[u].qText;
             }
             return hash;
-        }
+        }       
         
-		
 		var getDataRows = function(data) {
 			var qMatrix = data.qMatrix;
 			var trs = new Array();
 			for(var i=0; i<qMatrix.length; i++) {
-                var t = qMatrix[i];
-				var tr = htmlDataRow(qMatrix,i);
-                var o = new Object();
-                o.identify = calcIdentifyHash(t);
-                o.tr = tr;
-				trs.push(o);
+                var rowData = qMatrix[i];
+				var tr = htmlDataRow(qMatrix[i]);
+                var dataRow = new DataRow(tr,calcIdentifyHash(rowData));
+				trs.push(new DataRow(tr,calcIdentifyHash(rowData)));
 			}
             return trs;
         };
 	
 		var requestAndDrawData = function(top,height,table,callbackWhenDone) {
-			var requestPages = null;
-			requestPages = [{
+        
+			var requestPages = [{
 				qTop: top,
 				qLeft: 0,
-				qWidth: 10,
+				qWidth: 10, //TODO: figure out what these are and what issue they can bring
 				qHeight: height
 			}];
+            // first, get data from backend api and build and append html rows based on data...
 			backendApi.getData( requestPages ).then( function ( dataPages ) {
 				if( dataPages.length!==1 ) throw "can only draw one data page at a time";
 				var dataPage = dataPages[0];
-				var trs = getDataRows(dataPage);
+				var trs = getDataRows(dataPage); // build html row based on data
+
+                for(var i=0; i<trs.length; i++) {
+                    var tr = trs[i].tr;
+                    table.appendChild(tr);                    
+                }
 				
+                //...then get style settings from backend
 				styleSettings.getStyleSettings(function(styleSettings){
-                    var lastTr = undefined;
+
+                    //...last, build RowControllers (and based on variable, build control panels)
                     for(var i=0; i<trs.length; i++) {
                     
                         var globalRowIndex = top+i;
@@ -236,16 +249,15 @@ define( ["./styleSettings","./scrolldownTable"], function (StyleSettings,Scrolld
 
                         var row = new RowController(tr,identify,styleSetting,globalRowIndex);
 
-                        var tdController = htmlStyleControlPanel(function(controlPanel){
-                            row.addControlPanel(controlPanel);
-                        });
-                        tr.appendChild( tdController )
-                        rows[globalRowIndex] = row;                           
-
-                        table.appendChild(tr);
-                        lastTr = tr;
+                        if(!hideControlls) { // TODO: force hide if in "done"-mode
+                            var tdController = htmlStyleControlPanel(function(controlPanel){
+                                row.addControlPanel(controlPanel);
+                            });                        
+                            tr.appendChild( tdController )
+                        }
+                        rows[globalRowIndex] = row;  // save all row controllers at global                          
                     }
-                                        
+                                                                                
                     var qArea = dataPage.qArea;
                     var nextTop = qArea.qTop+qArea.qHeight;
                     var isNoMoreData = qArea.qHeight===0;
@@ -254,27 +266,33 @@ define( ["./styleSettings","./scrolldownTable"], function (StyleSettings,Scrolld
 			});	
 		}
 
-		
+        // (re)draw to canvas (root div and table(headers))
+        // @return root div and table
 		var redraw = function($element,layout) {
 			$element.empty();
-            var r = htmlRootDivAndTable();
-			$element.append(r.rootDiv);            
-			return r;
-
+            var rootDivAndTable = htmlRootDivAndTable();
+			$element.append(rootDivAndTable.rootDiv);            
+			return rootDivAndTable;
 		};
 
         // Sets Main to works as "Scroll mode" (load data while scroll down)
 		this.scrollMode = function(rowsPerPage) {
 
-            var lastRow = null;
             var elements = redraw($element,layout); // draw canvas
+            var top = 0; // from what index to fetch data next
             
             // Handle scrolldown
-            var scrolldownTable = new ScrolldownTable(rowsPerPage, elements.rootDiv,
-                function(top,rowsPerPage,callback) {
-                    requestAndDrawData(top,rowsPerPage,elements.table,
+            var scrolldownHandler = new ScrolldownHandler(elements.rootDiv,
+
+                function(callback) { // defines function to be called when scrollhander tells it is time to fetch more data to table. call callback when data have been fetched
+
+                    requestAndDrawData(top,rowsPerPage,elements.table, // fetch and draw data
                         function(next,end) {
-                            callback(next,end);
+                            top = next;  // keep track of what "index"(top) to get data from next
+                            callback(end); // tell scrollhandler that data have been fetch and drawn. (it is now secure(thread safe) for scrollhandler to call fetch adn draw more data)
+                                           // param end. Tells if there are no more data to be fecth
+
+                            // update style on the new rows. (TODO: now it is all rows. Fix so only required rows are update (all new and the last before them))
                             for(var i=0; i<rows.length; i++) {
                                 rows[i].updateStyle();
                             }

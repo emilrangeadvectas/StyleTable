@@ -17,8 +17,6 @@ define( [], function () {
 			});
 		};
 
-
-
 		this.getStyleSettings = function(callbackWhenDone) {
 			
 			loadSettingsFromBackend(function(c){
