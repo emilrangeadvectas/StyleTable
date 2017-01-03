@@ -15,8 +15,6 @@ define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,Scrol
         /*                                                                                                            */
         var htmlStyleControlPanel = function(controlInputsCallback) {
         
-			var inputStyle = "padding:1px;margin:0; height:20px; border:0;vertical-align:top;margin-left:3px";
-
 			var tdController = document.createElement("TD");
 
 			// "Set to bold"-button
@@ -24,28 +22,24 @@ define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,Scrol
 			var textBold = document.createTextNode("Bold")
 			boldButton.appendChild(textBold);
 			tdController.appendChild(boldButton);
-			boldButton.style = inputStyle;
-
+	
             // Background color picker
 			var colorInput = document.createElement("INPUT");
 			colorInput.type = "color";
 			tdController.appendChild(colorInput);
-			colorInput.style = inputStyle;
-
+	
 			// "Unset color"-button
 			var unsetColorButton = document.createElement("BUTTON");
 			var textUnsetColor = document.createTextNode("Unset color");
 			unsetColorButton.appendChild(textUnsetColor);
 			tdController.appendChild(unsetColorButton);
-			unsetColorButton.style = inputStyle;
-
+	
             // "Border"-button
 			var borderButton = document.createElement("BUTTON");
 			var textBorder = document.createTextNode("Border")
 			borderButton.appendChild(textBorder);
 			tdController.appendChild(borderButton);
-            borderButton.style = inputStyle;
-
+    
             var o = new Object();
             o.boldButton = boldButton;
             o.borderButton = borderButton;
@@ -59,7 +53,6 @@ define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,Scrol
 		var htmlDataTableHeader = function(headers) {
 		
 			var table = document.createElement("TABLE");
-			var thStyle = "padding: 4px; font-size:16px; text-align:left; border-bottom: 1px solid #555";			
 			
 			//Draw header
 			var tr = document.createElement("TR");
@@ -69,7 +62,6 @@ define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,Scrol
 				table.appendChild(tr);
 				tr.appendChild(th);
 				th.appendChild(textHeader);
-				th.style = thStyle;
 			}			
 	
 			return table;
@@ -77,14 +69,12 @@ define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,Scrol
         
         var htmlDataRow = function(rowData) {
 
-            var tdStyle = "padding: 4px; font-size:14px; text-align:left";
             var tr = document.createElement("TR");
 			for(var u=0; u<rowData.length; u++) {
 				var td = document.createElement("TD");
 				var elementText = document.createTextNode(rowData[u].qText)
 				tr.appendChild(td);
 				td.appendChild(elementText);
-				td.style = tdStyle;
 			}
             return tr;
         }
@@ -97,7 +87,7 @@ define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,Scrol
 			rootDiv.style.height = canvasHeight+"px";
 			rootDiv.style.overflowY = "scroll";
             
-			var table = htmlDataTableHeader(getHeadersFromLayout(layout));
+			var table = htmlDataTableHeader(getHeaders());
 			table.style.width = (canvasWidth-10)+"px";
 			rootDiv.appendChild(table);	
             return { "rootDiv":rootDiv, "table":table};
@@ -123,9 +113,7 @@ define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,Scrol
             }
             
 			this.updateStyle = function() {
-                        
-                styleSetting;
-                
+          
                 var aboveRowController = getAboveRowController();
                 var belowRowController = getBelowRowController();
                
@@ -183,7 +171,7 @@ define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,Scrol
             this.identify = identify;
         }
  		
-		var getHeadersFromLayout = function(layout) {
+		var getHeaders = function() {
 			var headers = [];
 			var hc = layout.qHyperCube;
 			for (var i = 0; i < hc.qDimensionInfo.length; i++) {
@@ -197,7 +185,8 @@ define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,Scrol
 		
         var calcIdentifyHash = function(rowData) {
             var hash = "";
-            for(var u=0; u<getHeadersFromLayout.length; u++) {
+			var hc = layout.qHyperCube;
+            for(var u=0; u<hc.qDimensionInfo.length; u++) {
                 var us = ""+u; 
                 hash +=  "|"+us+"|"+rowData[u].qText;
             }
@@ -221,7 +210,7 @@ define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,Scrol
 			var requestPages = [{
 				qTop: top,
 				qLeft: 0,
-				qWidth: 10, //TODO: figure out what these are and what issue they can bring
+				qWidth: getHeaders().length, //TODO: figure oout if this is the correct way to view all columns
 				qHeight: height
 			}];
             // first, get data from backend api and build and append html rows based on data...
@@ -277,7 +266,7 @@ define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,Scrol
 
         // Sets Main to works as "Scroll mode" (load data while scroll down)
 		this.scrollMode = function(rowsPerPage) {
-
+        
             var elements = redraw($element,layout); // draw canvas
             var top = 0; // from what index to fetch data next
             

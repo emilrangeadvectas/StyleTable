@@ -1,8 +1,9 @@
 
-define( ["jquery","./Main"],
-    function ( $, Main ) {
+define( ["jquery","./Main","text!./css/style.css"],
+    function ( $, Main, cssContent ) {
         'use strict';
 
+        $( '<style>' ).html(cssContent).appendTo( 'head' );
 		var defaultPageSize = 10;
 		var painted = false;
 		
@@ -58,9 +59,13 @@ define( ["jquery","./Main"],
 						}
 					}
 				}
-			},		
+			},
+            support: {
+                export: true,
+                exportData: false
+            },
 			paint: function ( $element, layout ) {
-                                
+            
                 var main = new Main(this.backendApi,$element, layout,!layout.props.showStyleSettings);
                 var rowPerPage = layout.props.numberOfRowsPerPage===undefined ? defaultPageSize : layout.props.numberOfRowsPerPage;
                 if(layout.props.pageHandler===1) {
