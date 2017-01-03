@@ -27,7 +27,10 @@ define( [], function () {
 		this.switchBold = function(hash) {
 			backendApi.getProperties().then(function(r){
 				if(r.meta) {
-					if(r.meta[hash]===undefined) r.meta[hash] = defaultStyleSetting;
+                    if (typeof r.meta === 'string' || r.meta instanceof String) {
+                        r.meta = JSON.parse(r.meta);
+                    }                
+                    if(r.meta[hash]===undefined) r.meta[hash] = defaultStyleSetting;
 					r.meta[hash].bold = !r.meta[hash].bold;
 					backendApi.applyPatches([ {"qPath":"/meta","qOp":"replace","qValue":JSON.stringify(r.meta)} ],false);
 				}
@@ -40,7 +43,10 @@ define( [], function () {
 		this.switchBorder = function(hash) {
 			backendApi.getProperties().then(function(r){
 				if(r.meta) {
-					if(r.meta[hash]===undefined) r.meta[hash] = defaultStyleSetting;
+                    if (typeof r.meta === 'string' || r.meta instanceof String) {
+                        r.meta = JSON.parse(r.meta);
+                    }
+                    if(r.meta[hash]===undefined) r.meta[hash] = defaultStyleSetting;
 					r.meta[hash].border = !r.meta[hash].border;
 					backendApi.applyPatches([ {"qPath":"/meta","qOp":"replace","qValue":JSON.stringify(r.meta)} ],false);
 				}
@@ -53,7 +59,10 @@ define( [], function () {
 		this.setColor = function(hash,color) {
 			backendApi.getProperties().then(function(r){
 				if(r.meta) {
-					if(r.meta[hash]===undefined) r.meta[hash] = defaultStyleSetting;
+                    if (typeof r.meta === 'string' || r.meta instanceof String) {
+                        r.meta = JSON.parse(r.meta);
+                    }
+                    if(r.meta[hash]===undefined) r.meta[hash] = defaultStyleSetting;
 					r.meta[hash].color = color;
 					backendApi.applyPatches([ {"qPath":"/meta","qOp":"replace","qValue":JSON.stringify(r.meta)} ],false);
 				}
@@ -66,7 +75,10 @@ define( [], function () {
 		this.unsetColor = function(hash) {
 			backendApi.getProperties().then(function(r){
 				if(r.meta) {
-					if(r.meta[hash]===undefined) r.meta[hash] = defaultStyleSetting;
+                    if (typeof r.meta === 'string' || r.meta instanceof String) {
+                        r.meta = JSON.parse(r.meta);
+                    }
+                    if(r.meta[hash]===undefined) r.meta[hash] = defaultStyleSetting;
 					r.meta[hash].color = null;
 					backendApi.applyPatches([ {"qPath":"/meta","qOp":"replace","qValue":JSON.stringify(r.meta)} ],false);
 				}

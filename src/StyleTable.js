@@ -71,9 +71,9 @@ define( ["jquery","./Main","text!./css/style.css"],
                 if(layout.props.pageHandler===1) {
                     main.scrollMode(rowPerPage);
                 }
-                else if(layout.props.pageHandler===2){
-                    main.paginatorMode(rowPerPage);
-                }
+//                else if(layout.props.pageHandler===2){
+                    //main.paginatorMode(rowPerPage);
+  //              }
                 else {
                     throw "Invalid page handler: "+layout.props.pageHandler;
                 }

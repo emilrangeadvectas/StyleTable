@@ -9,7 +9,7 @@ define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,Scrol
 		var styleSettings = new StyleSettings(backendApi);
 		var hideControlls = hideControlls;
         var rows = new Array();
-        
+        var currentSort = new Array();
         /*                                                                                                            */
         /* Html builders - these method takes care of building html-element based on param data (and nothing else)    */
         /*                                                                                                            */
@@ -51,19 +51,21 @@ define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,Scrol
         }
 
 		var htmlDataTableHeader = function(headers) {
-		
+
 			var table = document.createElement("TABLE");
-			
+
 			//Draw header
 			var tr = document.createElement("TR");
 			for(var i=0; i<headers.length; i++) {
 				var th = document.createElement("TH");
-				var textHeader = document.createTextNode(headers[i])
+				var textHeader = document.createTextNode(headers[i]);
+
+                (function(i){  th.onclick= function(){  setSort(i); };  })(i);
+                
 				table.appendChild(tr);
 				tr.appendChild(th);
 				th.appendChild(textHeader);
-			}			
-	
+			}
 			return table;
 		};
         
@@ -77,6 +79,20 @@ define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,Scrol
 				td.appendChild(elementText);
 			}
             return tr;
+        }
+        
+        var setSort = function(i) {
+            
+            backendApi.getProperties().then(function(reply){
+
+                var n = reply.qHyperCubeDef.qInterColumnSortOrder;
+                var index = n.indexOf(i);                
+                if(index>-1) n.splice(index,1);
+                n.unshift(i);
+                console.log(n);
+                reply.qHyperCubeDef.qInterColumnSortOrder = n;
+                backendApi.setProperties(reply);
+            });            
         }
         
         var htmlRootDivAndTable = function() {
@@ -114,11 +130,17 @@ define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,Scrol
             
 			this.updateStyle = function() {
           
+                if( styleSetting === null ) return;
+                if( styleSetting === undefined ) return;
+                
                 var aboveRowController = getAboveRowController();
                 var belowRowController = getBelowRowController();
                
                 var styleAbove = aboveRowController ? aboveRowController.styleSetting : null;
                 var styleBelow = belowRowController ? belowRowController.styleSetting : null;;
+                
+                if(styleBelow===undefined) styleBelow = null;
+                if(styleAbove===undefined) styleAbove = null;
                 
 				for(var i=0; i<tds.length; i++) {
 					var td = tds[i];					
@@ -234,8 +256,8 @@ define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,Scrol
                     
                         var tr = trs[i].tr;
                         var identify = trs[i].identify;
-                        var styleSetting = styleSettings[identify];
-
+                        var styleSetting = styleSettings!==undefined ? styleSettings[identify] : null;
+                        
                         var row = new RowController(tr,identify,styleSetting,globalRowIndex);
 
                         if(!hideControlls) { // TODO: force hide if in "done"-mode
