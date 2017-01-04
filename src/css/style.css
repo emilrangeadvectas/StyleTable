@@ -3,9 +3,40 @@
 }
 
 .qv-object-StyleTable th {
-    padding: 4px; font-size:16px; text-align:left; border-bottom: 1px solid #555
+    padding: 6px; font-size:16px; text-align:left; border-bottom: 1px solid #cccccc;
+    font-weight: normal;
+    font-size: 15px;
+    border-right: 1px solid #e6e6e6;
+}
+
+.qv-object-StyleTable th:hover {
+    background: #f8f8f8;
+    cursor: pointer;
+}
+
+.qv-object-StyleTable th:active {
+    color: #eee;
+    background: #444;
 }
 
 .qv-object-StyleTable td {
-    padding: 4px; font-size:14px; text-align:left
+    padding: 6px; 
+    font-size:14px;
+    text-align:left;
+    border-right: 1px solid #e6e6e6;
+    border-bottom: 1px solid #f2f2f2;
+    font-size: 13px;
+    padding-top: 5px; 
+}
+
+.qv-object-StyleTable table {
+    border: 0;
+    border-top: 1px solid #f2f2f2;
+}
+
+.qv-object-StyleTable .dim {
+}
+
+.qv-object-StyleTable .mes {
+    text-align:right;
 }

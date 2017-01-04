@@ -1,4 +1,4 @@
-define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,ScrolldownHandler) {
+define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSettings,ScrolldownHandler,$) {
 	'use strict';
 
 	var Main = function(backendApi,$element,layout,hideControlls) {
@@ -9,7 +9,7 @@ define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,Scrol
 		var styleSettings = new StyleSettings(backendApi);
 		var hideControlls = hideControlls;
         var rows = new Array();
-        var currentSort = new Array();
+        
         /*                                                                                                            */
         /* Html builders - these method takes care of building html-element based on param data (and nothing else)    */
         /*                                                                                                            */
@@ -59,15 +59,34 @@ define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,Scrol
 			for(var i=0; i<headers.length; i++) {
 				var th = document.createElement("TH");
 				var textHeader = document.createTextNode(headers[i]);
-
-                (function(i){  th.onclick= function(){  setSort(i); };  })(i);
+                
+                if(getCurrentSort()[0]===i) {
+                    var img = document.createElement("IMG");
+                    img.src = "/extensions/StyleTable/img/arrow.png";
+                    th.appendChild(img);
+                }
+                
+                (function(i){  th.onclick= function(){  setSort(i); };  })(i); //TODO: move this logic to other function. html-method should only handle build html
+                
                 
 				table.appendChild(tr);
 				tr.appendChild(th);
 				th.appendChild(textHeader);
+                $(th).addClass(i<getNumberOfDimensions() ? "dim" : "mes");
 			}
+            
+            if(!hideControlls)
+                tr.appendChild(htmlControlPanelHeader());
+            
 			return table;
 		};
+
+        var htmlControlPanelHeader = function() {
+            var th = document.createElement("TH");
+            var textHeader = document.createTextNode("STYLE CONTROLPANEL");
+			th.appendChild(textHeader);
+            return th;
+        }
         
         var htmlDataRow = function(rowData) {
 
@@ -77,24 +96,14 @@ define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,Scrol
 				var elementText = document.createTextNode(rowData[u].qText)
 				tr.appendChild(td);
 				td.appendChild(elementText);
-			}
+
+                (function(u,elemNumber){  td.onclick= function(){  swicthValues(u,elemNumber); };  })(u,rowData[u].qElemNumber); //TODO: move this logic to other function. html-method should only handle build html
+
+                $(td).addClass(u<getNumberOfDimensions() ? "dim" : "mes");
+            }
             return tr;
         }
-        
-        var setSort = function(i) {
-            
-            backendApi.getProperties().then(function(reply){
-
-                var n = reply.qHyperCubeDef.qInterColumnSortOrder;
-                var index = n.indexOf(i);                
-                if(index>-1) n.splice(index,1);
-                n.unshift(i);
-                console.log(n);
-                reply.qHyperCubeDef.qInterColumnSortOrder = n;
-                backendApi.setProperties(reply);
-            });            
-        }
-        
+                
         var htmlRootDivAndTable = function() {
 			var rootDiv = document.createElement("DIV");
 			var canvasWidth = $element[0].clientWidth;
@@ -110,16 +119,43 @@ define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,Scrol
         }            
         
         /*  -- */
+
+        var getCurrentSort = function() {        
+            return layout.qHyperCube.qEffectiveInterColumnSortOrder;
+        };
+
+        var swicthValues = function(dimIndex,rowIndex) {
+            backendApi.selectValues(dimIndex, [rowIndex], true);        
+        };
+        
+        var setSort = function(i) {
+        
+            backendApi.getProperties().then(function(reply){
+            
+                var n = reply.qHyperCubeDef.qInterColumnSortOrder;
+                var index = n.indexOf(i);                
+                if(index>-1) n.splice(index,1);
+                n.unshift(i);
+                reply.qHyperCubeDef.qInterColumnSortOrder = n;
+                backendApi.setProperties(reply);
+            });            
+        };
 		
+        var getNumberOfDimensions = function() {
+            return layout.qHyperCube.qDimensionInfo.length;
+        };
+        
         // RowController handles control panel logic form style settings and updating style on html rows
 		var RowController = function(tr,identify,styleSetting,index) {
 
+        
 			var row = this;
 			this.styleSetting = styleSetting;
             var controlPanel = null;
             
 			var tds = Array.prototype.slice.call( tr.getElementsByTagName("td") );
-
+            this.tds = tds;
+            
             var getAboveRowController = function() {
                 return rows[index-1] !== undefined ? rows[index-1] : null;
             }
@@ -129,6 +165,7 @@ define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,Scrol
             }
             
 			this.updateStyle = function() {
+          
           
                 if( styleSetting === null ) return;
                 if( styleSetting === undefined ) return;
@@ -147,16 +184,20 @@ define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,Scrol
 					td.style.backgroundColor = styleSetting.color;
 					td.style.fontWeight = styleSetting.bold === true ? "bold" : "normal"
 					if(styleSetting.border === true && styleAbove!==null) {
-						td.style.borderTop = styleAbove.border!==true ? "1px solid #000" : "";
+						if(styleAbove.border!==true) aboveRowController.tds[i].style.borderBottom = "1px solid #000";
 					}
 
 					if(styleSetting.border === true && styleBelow!==null) {
-						td.style.borderBottom = styleBelow.border!==true ? "1px solid #000" : "";
+						if(styleBelow.border!==true) td.style.borderBottom = "1px solid #000";
 					}
 					
 				}
-				tds[tds.length-1].style.borderRight = styleSetting.border === true ? "1px solid #000" : "0";
-				tds[0].style.borderLeft = styleSetting.border === true ? "1px solid #000" : "0";
+
+				if(styleSetting.border === true) {
+                    tds[0].style.borderLeft = "1px solid #000";
+                    tds[tds.length-1].style.borderRight = "1px solid #000";
+                }
+
                 if(controlPanel!==null) {
                     controlPanel.boldButton.style.fontWeight = styleSetting.bold===true ? "bold" : "normal";
                     controlPanel.borderButton.style.fontWeight = styleSetting.border===true ? "bold" : "normal";
@@ -247,7 +288,7 @@ define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,Scrol
                 }
 				
                 //...then get style settings from backend
-				styleSettings.getStyleSettings(function(styleSettings){
+				styleSettings.getStyleSettings(function(styleSettingsMap){
 
                     //...last, build RowControllers (and based on variable, build control panels)
                     for(var i=0; i<trs.length; i++) {
@@ -256,7 +297,7 @@ define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,Scrol
                     
                         var tr = trs[i].tr;
                         var identify = trs[i].identify;
-                        var styleSetting = styleSettings!==undefined ? styleSettings[identify] : null;
+                        var styleSetting = styleSettingsMap.get(identify);
                         
                         var row = new RowController(tr,identify,styleSetting,globalRowIndex);
 
@@ -280,6 +321,7 @@ define( ["./StyleSettings","./ScrolldownHandler"], function (StyleSettings,Scrol
         // (re)draw to canvas (root div and table(headers))
         // @return root div and table
 		var redraw = function($element,layout) {
+                
 			$element.empty();
             var rootDivAndTable = htmlRootDivAndTable();
 			$element.append(rootDivAndTable.rootDiv);            

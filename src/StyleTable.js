@@ -1,10 +1,11 @@
 
-define( ["jquery","./Main","text!./css/style.css"],
-    function ( $, Main, cssContent ) {
+define( ["./Main","text!./css/style.css"],
+    function ( Main, cssContent, imgArrow ) {
         'use strict';
 
         $( '<style>' ).html(cssContent).appendTo( 'head' );
 		var defaultPageSize = 10;
+        var defaultPageHandler = 1;
 		var painted = false;
 		
         return {
@@ -47,7 +48,7 @@ define( ["jquery","./Main","text!./css/style.css"],
 								component: "switch",
 								label: "Page handler",
 								ref: "props.pageHandler",
-								defaultValue: defaultPageSize,
+								defaultValue: defaultPageHandler,
 								options: [{
 									value: 2,
 									label: "Paginator"
@@ -67,8 +68,12 @@ define( ["jquery","./Main","text!./css/style.css"],
 			paint: function ( $element, layout ) {
             
                 var main = new Main(this.backendApi,$element, layout,!layout.props.showStyleSettings);
+
                 var rowPerPage = layout.props.numberOfRowsPerPage===undefined ? defaultPageSize : layout.props.numberOfRowsPerPage;
-                if(layout.props.pageHandler===1) {
+                var pageHandler = layout.props.pageHandler===undefined ? defaultPageHandler : layout.props.pageHandler;
+
+
+                if(pageHandler===1) {
                     main.scrollMode(rowPerPage);
                 }
 //                else if(layout.props.pageHandler===2){

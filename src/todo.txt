@@ -22,3 +22,11 @@ RE-THINK:
     
 BUGS?
     Seen cases where I only show one row per page in scrollmode that rows have been not appeared. Look into why? Even if we one row per page is never used this can be good to look into anyway. If "One row per page" can be used, make option not valid.
+    
+    Look into why press two times before first apply style setting
+    
+    Reverse order when click twice on header column (ask qlik slack?)
+    
+    Export image (wait for answer from qlik community)
+    
+    Fix the grey line colors between styled background colors. (remove grey line?)  

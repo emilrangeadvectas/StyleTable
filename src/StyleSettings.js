@@ -5,6 +5,17 @@ define( [], function () {
 		
 		var backendApi = backendApi;
 
+        var StyleSettingsMap = function(map) {
+                
+            this.get = function(key) {
+
+                if(map[key]===undefined) return defaultStyleSetting;
+
+                return map[key];
+            };
+        
+        };
+        
         var defaultStyleSetting = {
             "bold": false,
             "border": false,
@@ -13,14 +24,17 @@ define( [], function () {
 		
 		var loadSettingsFromBackend = function(callbackWhenDone) {
 			backendApi.getProperties().then(function(r){
-				callbackWhenDone(r.meta);
+                if(r.meta===undefined) {
+                    callbackWhenDone({});
+                }
+                else callbackWhenDone(r.meta);
 			});
 		};
 
 		this.getStyleSettings = function(callbackWhenDone) {
 			
 			loadSettingsFromBackend(function(c){
-				callbackWhenDone(c);
+				callbackWhenDone(new StyleSettingsMap(c));
 			});
 		};
 
