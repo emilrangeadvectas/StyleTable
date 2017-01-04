@@ -9,7 +9,9 @@ define( ["./Main","text!./css/style.css"],
 		var painted = false;
 		
         return {
-
+            initialProperties : {
+                selectionMode : "CONFIRM"
+            },
             definition: {
 				type: "items",
 				component: "accordion",
@@ -67,7 +69,7 @@ define( ["./Main","text!./css/style.css"],
             },
 			paint: function ( $element, layout ) {
             
-                var main = new Main(this.backendApi,$element, layout,!layout.props.showStyleSettings);
+                var main = new Main(this.backendApi,$element, layout,!layout.props.showStyleSettings,this);
 
                 var rowPerPage = layout.props.numberOfRowsPerPage===undefined ? defaultPageSize : layout.props.numberOfRowsPerPage;
                 var pageHandler = layout.props.pageHandler===undefined ? defaultPageHandler : layout.props.pageHandler;

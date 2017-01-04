@@ -1,14 +1,87 @@
 define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSettings,ScrolldownHandler,$) {
 	'use strict';
 
-	var Main = function(backendApi,$element,layout,hideControlls) {
+	var Main = function(backendApi,$element,layout,hideControlls,self) {
 	
+        var self = self;
 		var backendApi = backendApi;
 		var $element = $element;
 		var layout = layout;
 		var styleSettings = new StyleSettings(backendApi);
 		var hideControlls = hideControlls;
         var rows = new Array();
+        
+        var SelectedValuesHandler = function() {
+
+            var selected = new Array();
+            var values = new Array();
+        
+            var switchValue = function(x,y) {
+                if(selected[x]===undefined) {            
+                    selected[x] = new Array();
+                    selected[x][y] = true;
+                    return selected[x][y];
+                }
+                selected[x][y] = selected[x][y] ? false : true; 
+                return selected[x][y];
+            }
+
+            var getValue = function(x,y) {
+                if(selected[x]===undefined) {            
+                    return false;
+                }
+                return selected[x][y] ? true : false; 
+            }
+            
+            var _click = function(dimIndex,rowIndex,span) {
+            
+            
+                switchValue(dimIndex,rowIndex);
+
+                for(var i =0; i<values.length; i++) {
+                    values[i].refresh();
+                }
+                
+                /*
+                if() {
+                }
+                else {
+ 
+                }*/
+            
+                
+                self.selectValues(dimIndex, [rowIndex], true);        
+            
+            }
+        
+        
+        
+            this.addValue = function(dimIndex,rowIndex,span) {
+                var o = new Object();
+                o.dimIndex = dimIndex;
+                o.rowIndex = rowIndex;
+                o.span = span;
+                o.click = function() {
+                    _click(dimIndex,rowIndex,span);
+                }
+                o.refresh = function() {
+                    if(getValue(dimIndex,rowIndex)) {
+                        var img = document.createElement("IMG");
+                        img.src = "/extensions/StyleTable/img/cross.png";
+                        if(span.childElementCount==0)span.appendChild(img);                
+                    }
+                    else {
+                        span.innerHTML = "";                    
+                    }
+                }
+                values.push(o);
+                return o;
+            }
+        
+        };
+        
+        var selectedValuesHandler = new SelectedValuesHandler();
+        
         
         /*                                                                                                            */
         /* Html builders - these method takes care of building html-element based on param data (and nothing else)    */
@@ -94,11 +167,28 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
 			for(var u=0; u<rowData.length; u++) {
 				var td = document.createElement("TD");
 				var elementText = document.createTextNode(rowData[u].qText)
+				var span = document.createElement("SPAN");
 				tr.appendChild(td);
+				td.appendChild(span);
 				td.appendChild(elementText);
 
-                (function(u,elemNumber){  td.onclick= function(){  swicthValues(u,elemNumber); };  })(u,rowData[u].qElemNumber); //TODO: move this logic to other function. html-method should only handle build html
+                var v = selectedValuesHandler.addValue(u,rowData[u].qElemNumber,span);
 
+                (function(v)
+                {
+
+                    /*
+                    td.onclick= function(){  
+                    switchValues(u,elemNumber,span);
+                    };*/
+
+                    td.onclick= function(){ v.click(); }
+
+
+                })(v); //TODO: move this logic to other function. html-method should only handle build html
+
+                
+                
                 $(td).addClass(u<getNumberOfDimensions() ? "dim" : "mes");
             }
             return tr;
@@ -124,8 +214,8 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
             return layout.qHyperCube.qEffectiveInterColumnSortOrder;
         };
 
-        var swicthValues = function(dimIndex,rowIndex) {
-            backendApi.selectValues(dimIndex, [rowIndex], true);        
+        var switchValues = function(dimIndex,rowIndex,span) {
+            selectedValuesHandler.click(dimIndex,rowIndex,span);
         };
         
         var setSort = function(i) {
@@ -352,7 +442,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
                         }
                     );
                 }
-            );
+            );            
 		}
     };
 	
