@@ -2,52 +2,82 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
 	'use strict';
 
 	var Main = function(backendApi,$element,layout,hideControlls,self) {
-	    
-        var self = self;
+
+    var self = self;
 		var backendApi = backendApi;
 		var $element = $element;
 		var layout = layout;
 		var styleSettings = new StyleSettings(backendApi);
 		var hideControlls = hideControlls;
-        var rows = new Array();
-        
+    var rows = new Array();
+		var colResizeDragElements = new Array();
+		var currentDragElement = null;
+
+    $(document).on('mousemove',function(e){
+			if(currentDragElement) {
+				currentDragElement.updateWidth(e.clientX);
+			}
+		});
+
+		$(document).on('mouseup',function(e){
+			currentDragElement = null;
+		});
+
+		$(document).on('mousedown',function(e){
+			for(var i=0; i<colResizeDragElements.length; i++) {
+				var dragElement = colResizeDragElements[i];
+				if(e.target===dragElement.html) {
+					currentDragElement = dragElement.startDrag(e.clientX);
+				}
+			}
+		});
+
+		var ColResizeDragElement = function(html) {
+			this.html = html;
+			var startX;
+			this.startDrag = function(_startX) {
+				startX = _startX;
+				return this;
+			}
+			this.updateWidth = function(x) {
+				console.log(x-startX);
+			}
+		}
         var SelectedValuesHandler = function() {
 
             var selected = new Array();
             var values = new Array();
-        
+
             var switchValue = function(x,y) {
-                if(selected[x]===undefined) {            
+                if(selected[x]===undefined) {
                     selected[x] = new Array();
                     selected[x][y] = true;
                     return selected[x][y];
                 }
-                selected[x][y] = selected[x][y] ? false : true; 
+                selected[x][y] = selected[x][y] ? false : true;
                 return selected[x][y];
             }
 
             var getValue = function(x,y) {
-                if(selected[x]===undefined) {            
+                if(selected[x]===undefined) {
                     return false;
                 }
-                return selected[x][y] ? true : false; 
+                return selected[x][y] ? true : false;
             }
-            
+
             var _click = function(dimIndex,rowIndex,span) {
-            
-            
+
+
                 switchValue(dimIndex,rowIndex);
 
                 for(var i =0; i<values.length; i++) {
                     values[i].refresh();
                 }
-                
-                self.selectValues(dimIndex, [rowIndex], true);        
-            
+
+                self.selectValues(dimIndex, [rowIndex], true);
+
             }
-        
-        
-        
+
             this.addValue = function(dimIndex,rowIndex,span) {
                 var o = new Object();
                 o.dimIndex = dimIndex;
@@ -60,26 +90,26 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
                     if(getValue(dimIndex,rowIndex)) {
                         var img = document.createElement("IMG");
                         img.src = "/extensions/StyleTable/img/cross.png";
-                        if(span.childElementCount==0)span.appendChild(img);                
+                        if(span.childElementCount==0)span.appendChild(img);
                     }
                     else {
-                        span.innerHTML = "";                    
+                        span.innerHTML = "";
                     }
                 }
                 values.push(o);
                 return o;
             }
-        
+
         };
-        
+
         var selectedValuesHandler = new SelectedValuesHandler();
-        
-        
+
+
         /*                                                                                                            */
         /* Html builders - these method takes care of building html-element based on param data (and nothing else)    */
         /*                                                                                                            */
         var htmlStyleControlPanel = function(controlInputsCallback) {
-        
+
 			var tdController = document.createElement("TD");
 
 			// "Set to bold"-button
@@ -87,63 +117,70 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
 			var textBold = document.createTextNode("Bold")
 			boldButton.appendChild(textBold);
 			tdController.appendChild(boldButton);
-	
+
             // Background color picker
 			var colorInput = document.createElement("INPUT");
 			colorInput.type = "color";
 			tdController.appendChild(colorInput);
-	
+
 			// "Unset color"-button
 			var unsetColorButton = document.createElement("BUTTON");
 			var textUnsetColor = document.createTextNode("Unset color");
 			unsetColorButton.appendChild(textUnsetColor);
 			tdController.appendChild(unsetColorButton);
-	
+
             // "Border"-button
 			var borderButton = document.createElement("BUTTON");
 			var textBorder = document.createTextNode("Border")
 			borderButton.appendChild(textBorder);
 			tdController.appendChild(borderButton);
-    
+
             var o = new Object();
             o.boldButton = boldButton;
             o.borderButton = borderButton;
             o.unsetColorButton = unsetColorButton;
             o.colorInput = colorInput;
             if(controlInputsCallback) controlInputsCallback(o);
-          
+
             return tdController;
         }
 
 		var htmlDataTableHeader = function(headers) {
-           
+
 			var table = document.createElement("TABLE");
-            
+
 
             //Draw header
 			var tr = document.createElement("TR");
 			for(var i=0; i<headers.length; i++) {
 				var th = document.createElement("TH");
 				var textHeader = document.createTextNode(headers[i]);
-                
+
                 if(getCurrentSort()[0]===i) {
                     var img = document.createElement("IMG");
                     img.src = "/extensions/StyleTable/img/arrow.png";
                     th.appendChild(img);
                 }
-                
+
                 (function(i){  th.onclick= function(){  setSort(i); };  })(i); //TODO: move this logic to other function. html-method should only handle build html
-                
-                
+
+
 				table.appendChild(tr);
+
+				var divDragColResize = document.createElement("DIV");
+				var divDragColResizeText = document.createTextNode("..");
+				divDragColResize.appendChild(divDragColResizeText);
+				th.appendChild(divDragColResize);
+				colResizeDragElements.push( new ColResizeDragElement(divDragColResize) );
+
 				tr.appendChild(th);
 				th.appendChild(textHeader);
                 $(th).addClass(i<getNumberOfDimensions() ? "dim" : "mes");
 			}
-            
+
             if(!hideControlls)
                 tr.appendChild(htmlControlPanelHeader());
-            
+
 			return table;
 		};
 
@@ -153,7 +190,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
 			th.appendChild(textHeader);
             return th;
         }
-        
+
         var htmlDataRow = function(rowData) {
 
             var tr = document.createElement("TR");
@@ -171,7 +208,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
                 {
 
                     /*
-                    td.onclick= function(){  
+                    td.onclick= function(){
                     switchValues(u,elemNumber,span);
                     };*/
 
@@ -180,13 +217,13 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
 
                 })(v); //TODO: move this logic to other function. html-method should only handle build html
 
-                
-                
+
+
                 $(td).addClass(u<getNumberOfDimensions() ? "dim" : "mes");
             }
             return tr;
         }
-                
+
         var htmlRootDivAndTable = function() {
 			var rootDiv = document.createElement("DIV");
 			var canvasWidth = $element[0].clientWidth;
@@ -194,51 +231,51 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
 			rootDiv.style.width = canvasWidth+"px";
 			rootDiv.style.height = canvasHeight+"px";
 			rootDiv.style.overflowY = "scroll";
-            
+
 			var table = htmlDataTableHeader(getHeaders());
 			table.style.width = (canvasWidth-10)+"px";
-			rootDiv.appendChild(table);	
+			rootDiv.appendChild(table);
             return { "rootDiv":rootDiv, "table":table};
-        }            
-        
+        }
+
         /*  -- */
 
-        var getCurrentSort = function() {        
+        var getCurrentSort = function() {
             return layout.qHyperCube.qEffectiveInterColumnSortOrder;
         };
 
         var switchValues = function(dimIndex,rowIndex,span) {
             selectedValuesHandler.click(dimIndex,rowIndex,span);
         };
-        
+
         var setSort = function(i) {
-        
+
             backendApi.getProperties().then(function(reply){
-            
+
                 var n = reply.qHyperCubeDef.qInterColumnSortOrder;
-                var index = n.indexOf(i);                
+                var index = n.indexOf(i);
                 if(index>-1) n.splice(index,1);
                 n.unshift(i);
                 reply.qHyperCubeDef.qInterColumnSortOrder = n;
                 backendApi.setProperties(reply);
-            });            
+            });
         };
-		
+
         var getNumberOfDimensions = function() {
             return layout.qHyperCube.qDimensionInfo.length;
         };
-        
+
         // RowController handles control panel logic form style settings and updating style on html rows
 		var RowController = function(tr,identify,styleSetting,index) {
 
-        
+
 			var row = this;
 			this.styleSetting = styleSetting;
             var controlPanel = null;
-            
+
 			var tds = Array.prototype.slice.call( tr.getElementsByTagName("td") );
             this.tds = tds;
-            
+
             var getAboveRowController = function() {
                 return rows[index-1] !== undefined ? rows[index-1] : null;
             }
@@ -246,24 +283,24 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
             var getBelowRowController = function() {
                 return rows[index+1] !== undefined ? rows[index+1] : null;
             }
-            
+
 			this.updateStyle = function() {
-          
-          
+
+
                 if( styleSetting === null ) return;
                 if( styleSetting === undefined ) return;
-                
+
                 var aboveRowController = getAboveRowController();
                 var belowRowController = getBelowRowController();
-               
+
                 var styleAbove = aboveRowController ? aboveRowController.styleSetting : null;
                 var styleBelow = belowRowController ? belowRowController.styleSetting : null;;
-                
+
                 if(styleBelow===undefined) styleBelow = null;
                 if(styleAbove===undefined) styleAbove = null;
-                
+
 				for(var i=0; i<tds.length; i++) {
-					var td = tds[i];					
+					var td = tds[i];
 					td.style.backgroundColor = styleSetting.color;
 					td.style.fontWeight = styleSetting.bold === true ? "bold" : "normal"
 					if(styleSetting.border === true && styleAbove!==null) {
@@ -275,7 +312,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
                         else td.style.borderBottom = "1px solid "+styleSetting.color;
 					}
                     td.style.borderRight = "0";
-					
+
 				}
 
 				if(styleSetting.border === true) {
@@ -289,7 +326,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
                     controlPanel.colorInput.value = styleSetting.color ? styleSetting.color :"#000000";
                 }
             };
-			
+
             this.addControlPanel = function(_controlPanel) {
 
                 controlPanel = _controlPanel;
@@ -300,7 +337,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
                 $(controlPanel.borderButton).click(function(){
                     styleSettings.switchBorder(identify);
                 });
-                
+
                 $(controlPanel.colorInput).change(function(){
                     styleSettings.setColor(identify,$(this).val());
                 });
@@ -308,17 +345,17 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
                 $(controlPanel.unsetColorButton).click(function(){
                     styleSettings.unsetColor(identify);
                     $(controlPanel.colorInput).val("#000000");
-                });            
+                });
             }
-			
+
 		}
 
         // Data Row hold the html data for a row and what identify-hash the row has
 		var DataRow = function(tr,identify) {
-            this.tr = tr;        
+            this.tr = tr;
             this.identify = identify;
         }
- 		
+
 		var getHeaders = function() {
 			var headers = [];
 			var hc = layout.qHyperCube;
@@ -330,17 +367,17 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
 			}
 			return headers;
 		}
-		
+
         var calcIdentifyHash = function(rowData) {
             var hash = "";
 			var hc = layout.qHyperCube;
             for(var u=0; u<hc.qDimensionInfo.length; u++) {
-                var us = ""+u; 
+                var us = ""+u;
                 hash +=  "|"+us+"|"+rowData[u].qText;
             }
             return hash;
-        }       
-        
+        }
+
 		var getDataRows = function(data) {
 			var qMatrix = data.qMatrix;
 			var trs = new Array();
@@ -352,9 +389,9 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
 			}
             return trs;
         };
-	
+
 		var requestAndDrawData = function(top,height,table,callbackWhenDone) {
-        
+
 			var requestPages = [{
 				qTop: top,
 				qLeft: 0,
@@ -369,56 +406,56 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
 
                 for(var i=0; i<trs.length; i++) {
                     var tr = trs[i].tr;
-                    table.appendChild(tr);                    
+                    table.appendChild(tr);
                 }
-				
+
                 //...then get style settings from backend
 				styleSettings.getStyleSettings(function(styleSettingsMap){
 
                     //...last, build RowControllers (and based on variable, build control panels)
                     for(var i=0; i<trs.length; i++) {
-                    
+
                         var globalRowIndex = top+i;
-                    
+
                         var tr = trs[i].tr;
                         var identify = trs[i].identify;
                         var styleSetting = styleSettingsMap.get(identify);
-                        
+
                         var row = new RowController(tr,identify,styleSetting,globalRowIndex);
 
                         if(!hideControlls) { // TODO: force hide if in "done"-mode
                             var tdController = htmlStyleControlPanel(function(controlPanel){
                                 row.addControlPanel(controlPanel);
-                            });                        
+                            });
                             tr.appendChild( tdController )
                         }
-                        rows[globalRowIndex] = row;  // save all row controllers at global                          
+                        rows[globalRowIndex] = row;  // save all row controllers at global
                     }
-                                                                                
+
                     var qArea = dataPage.qArea;
                     var nextTop = qArea.qTop+qArea.qHeight;
                     var isNoMoreData = qArea.qHeight===0;
                     callbackWhenDone(nextTop,isNoMoreData);
 				});
-			});	
+			});
 		}
 
         // (re)draw to canvas (root div and table(headers))
         // @return root div and table
 		var redraw = function($element,layout) {
-                
+
 			$element.empty();
             var rootDivAndTable = htmlRootDivAndTable();
-			$element.append(rootDivAndTable.rootDiv);            
+			$element.append(rootDivAndTable.rootDiv);
 			return rootDivAndTable;
 		};
 
         // Sets Main to works as "Scroll mode" (load data while scroll down)
 		this.scrollMode = function(rowsPerPage) {
-        
+
             var elements = redraw($element,layout); // draw canvas
             var top = 0; // from what index to fetch data next
-            
+
             // Handle scrolldown
             var scrolldownHandler = new ScrolldownHandler(elements.rootDiv,
 
@@ -437,9 +474,9 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
                         }
                     );
                 }
-            );            
+            );
 		}
     };
-	
+
 	return Main;
 });
