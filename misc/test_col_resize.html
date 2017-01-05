@@ -1,0 +1,47 @@
+<html>
+
+  <style>
+    #d{cursor:col-resize;}
+  </style>
+
+  <table border="1">
+		<tr>
+			<th id="a">abc</th><td id="d">.</td>
+			<th>def</th>
+		</tr>
+	</table>
+
+  <script>
+    var resize = false;
+    var width = 200;
+    document.getElementById('a').width = width;
+
+    $(document).on('mousedown',function(e){
+
+      console.log(e);
+      if(e.target===  document.getElementById('d')) {
+        console.log(e);
+        resize = true; startX = e.clientX-width;
+      }
+
+    });
+    $(document).on('mousemove',function(e){
+
+      e.preventDefault();
+      if(resize) {
+        width = -(startX-e.clientX);
+
+        document.getElementById('a').width = width;
+        console.log(width);
+      }
+
+    });
+
+    $(document).on('mouseup',function(e){
+      e.preventDefault();
+      resize = false;
+    });
+
+  </script>
+
+</html>
