@@ -2,7 +2,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
 	'use strict';
 
 	var Main = function(backendApi,$element,layout,hideControlls,self) {
-	
+	    
         var self = self;
 		var backendApi = backendApi;
 		var $element = $element;
@@ -41,14 +41,6 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
                 for(var i =0; i<values.length; i++) {
                     values[i].refresh();
                 }
-                
-                /*
-                if() {
-                }
-                else {
- 
-                }*/
-            
                 
                 self.selectValues(dimIndex, [rowIndex], true);        
             
@@ -124,10 +116,11 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
         }
 
 		var htmlDataTableHeader = function(headers) {
-
+           
 			var table = document.createElement("TABLE");
+            
 
-			//Draw header
+            //Draw header
 			var tr = document.createElement("TR");
 			for(var i=0; i<headers.length; i++) {
 				var th = document.createElement("TH");
@@ -279,7 +272,9 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
 
 					if(styleSetting.border === true && styleBelow!==null) {
 						if(styleBelow.border!==true) td.style.borderBottom = "1px solid #000";
+                        else td.style.borderBottom = "1px solid "+styleSetting.color;
 					}
+                    td.style.borderRight = "0";
 					
 				}
 
