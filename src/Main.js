@@ -32,15 +32,24 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
 			}
 		});
 
-		var ColResizeDragElement = function(html) {
+		var ColResizeDragElement = function(html,html2) {
 			this.html = html;
 			var startX;
+			var initWidth = null;
+
 			this.startDrag = function(_startX) {
 				startX = _startX;
+				initWidth = html2.offsetWidth
+				console.log(initWidth);
 				return this;
 			}
 			this.updateWidth = function(x) {
-				console.log(x-startX);
+
+				var d = x-startX;
+			  html2.width = initWidth+d;
+				console.log(html2.width);
+//				html2.width += d;
+
 			}
 		}
         var SelectedValuesHandler = function() {
@@ -154,9 +163,12 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
 			var tr = document.createElement("TR");
 			for(var i=0; i<headers.length; i++) {
 				var th = document.createElement("TH");
+				var td = document.createElement("TD");
+				td.style.padding="1px";
+				td.width = 1;
 				var textHeader = document.createTextNode(headers[i]);
 
-                if(getCurrentSort()[0]===i) {
+          if(getCurrentSort()[0]===i) {
                     var img = document.createElement("IMG");
                     img.src = "/extensions/StyleTable/img/arrow.png";
                     th.appendChild(img);
@@ -168,15 +180,21 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
 				table.appendChild(tr);
 
 				var divDragColResize = document.createElement("DIV");
-				var divDragColResizeText = document.createTextNode("..");
+				var divDragColResizeText = document.createTextNode(".");
 				divDragColResize.appendChild(divDragColResizeText);
-				th.appendChild(divDragColResize);
-				colResizeDragElements.push( new ColResizeDragElement(divDragColResize) );
+			//	th.appendChild(divDragColResize);
+				colResizeDragElements.push( new ColResizeDragElement(td,th) );
 
 				tr.appendChild(th);
+				tr.appendChild(td);
+				//td.appendChild(divDragColResize);
 				th.appendChild(textHeader);
                 $(th).addClass(i<getNumberOfDimensions() ? "dim" : "mes");
+
+
 			}
+			var td = document.createElement("TD");
+			tr.appendChild(td);
 
             if(!hideControlls)
                 tr.appendChild(htmlControlPanelHeader());
@@ -196,9 +214,13 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery"], function (StyleSett
             var tr = document.createElement("TR");
 			for(var u=0; u<rowData.length; u++) {
 				var td = document.createElement("TD");
+				var td2 = document.createElement("TD");
+				td2.style.padding=0;
+
 				var elementText = document.createTextNode(rowData[u].qText)
 				var span = document.createElement("SPAN");
 				tr.appendChild(td);
+				tr.appendChild(td2);
 				td.appendChild(span);
 				td.appendChild(elementText);
 
