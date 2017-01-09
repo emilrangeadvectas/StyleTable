@@ -10,7 +10,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
   var styleSettings = new StyleSettings(backendApi);
   var hideControlls = hideControlls;
   var rows = new Array();
-  var colResizeManager = new ColResizeManager();
+  var colResizeManager = new ColResizeManager(backendApi);
 
 
   var SelectedValuesHandler = function() {
@@ -124,9 +124,9 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
   var tr = document.createElement("TR");
   for(var i=0; i<headers.length; i++) {
   var th = document.createElement("TH");
-  var td = document.createElement("TD");
-  td.style.padding="1px";
-  td.width = 1;
+  var tdColResize = document.createElement("TD");
+  $(tdColResize).addClass("resizeGrab");
+
   var textHeader = document.createTextNode(headers[i]);
 
   if(getCurrentSort()[0]===i) {
@@ -141,13 +141,10 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
   table.appendChild(tr);
 
   var divDragColResize = document.createElement("DIV");
-  var divDragColResizeText = document.createTextNode(".");
-  divDragColResize.appendChild(divDragColResizeText);
-  //	th.appendChild(divDragColResize);
-  callback(td,th,i,headers[i]);
+
+  callback(tdColResize,th,i,headers[i]);
   tr.appendChild(th);
-  tr.appendChild(td);
-  //td.appendChild(divDragColResize);
+  tr.appendChild(tdColResize);
   th.appendChild(textHeader);
   $(th).addClass(i<getNumberOfDimensions() ? "dim" : "mes");
 
@@ -184,6 +181,8 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
       $(td).addClass(u<getNumberOfDimensions() ? "dim" : "mes");
       callback(u,rowData[u].qElemNumber,span,td);
     }
+    var td = document.createElement("TD");
+    tr.appendChild(td);
     return tr;
   }
 
@@ -262,7 +261,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
   if(styleBelow===undefined) styleBelow = null;
   if(styleAbove===undefined) styleAbove = null;
 
-  for(var i=0; i<tds.length; i++) {
+  for(var i=0; i<tds.length-2; i++) {
   var td = tds[i];
   td.style.backgroundColor = styleSetting.color;
   td.style.fontWeight = styleSetting.bold === true ? "bold" : "normal"
@@ -280,7 +279,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
 
   if(styleSetting.border === true) {
   tds[0].style.borderLeft = "1px solid #000";
-  tds[tds.length-1].style.borderRight = "1px solid #000";
+  tds[tds.length-3].style.borderRight = "1px solid #000";
   }
 
   if(controlPanel!==null) {

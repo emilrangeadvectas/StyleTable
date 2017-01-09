@@ -14,6 +14,13 @@
     cursor: pointer;
 }
 
+.qv-object-StyleTable .resizeGrab {
+  cursor: e-resize;
+  cursor: w-resize;
+  width: 1px;
+  padding: 1px;
+}
+
 .qv-object-StyleTable th:active {
     color: #eee;
     background: #444;

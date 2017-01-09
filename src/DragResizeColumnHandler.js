@@ -1,39 +1,63 @@
 define( [], function () {
 	'use strict';
 
-  var ColResizeManager = function() {
-    var widths = new Array();
-    var lastX = null;
+  var ColResizeManager = function(backendApi) {
+
+		var WidthDataContainer = function() {
+			var widths = {};
+ 			this.set = function(key,value,saveToBackend) {
+				widths[key] = value;
+				if(saveToBackend) {
+					backendApi.applyPatches([ {"qPath":"/colwidth","qOp":"add","qValue":JSON.stringify(widths)} ],false);
+				}
+			}
+			this.get = function(key) {
+				return widths[key];
+			}
+			this.getFromBackend = function(key,callback) {
+				backendApi.getProperties().then(function(r){
+					var colwidth = r.colwidth;
+					if(colwidth===undefined) {
+						callback(undefined);
+					}
+					else {
+						widths[key] = colwidth[key];
+						callback(colwidth[key]);
+					}
+				});
+			}
+		}
+
+		var lastX = null;
     var colResizeDragElements = new Array();
     var currentDragElement = null;
+		var widthDataContainer = new WidthDataContainer();
 
     var ColResizeDragElement = function(html,html2,index) {
       this.html = html;
       this.index = index;
 
-			if(widths[index]===undefined) {
-				widths[index] = 200;
-			}
+			widthDataContainer.getFromBackend(index,function(value){
+				setShowWidth(value);
+			});
 
-      var startX;
-      var initWidth = widths[index];
-      html2.width = widths[index];
+			if(widthDataContainer.get(index)===undefined) {
+				widthDataContainer.set(index,200); //TODO: make "default" longest string in dimension. (all string or just the one that can be seen?)
+			}
 
 			var setShowWidth = function(w) {
 				html2.width = w;
 			}
 
-      this.startDrag = function(_startX) {
-        startX = _startX;
-        initWidth = widths[index];
-        html2.width = widths[index];
+      this.startDrag = function() {
+        html2.width = widthDataContainer.get(index);
         return this;
       }
       this.updateWidth = function(x) {
 				setShowWidth(parseInt(html2.width) - x);
       }
       this.onRelease = function() {
-        widths[index] = html2.offsetWidth;
+				widthDataContainer.set(index,html2.offsetWidth,true);
       }
     }
     this.addColResizeDragElement = function(td,th,index) {
@@ -63,7 +87,7 @@ define( [], function () {
       for(var i=0; i<colResizeDragElements.length; i++) {
         var dragElement = colResizeDragElements[i];
         if(e.target===dragElement.html) {
-          currentDragElement = dragElement.startDrag(e.clientX);
+          currentDragElement = dragElement.startDrag();
         }
       }
     });
