@@ -99,14 +99,14 @@ define( ["./Main","text!./css/style.css"],
             },
     paint: function ( $element, layout ) {
 
+      console.log(layout);
+
       var main = new Main(this.backendApi,$element, layout,!layout.props.showStyleSettings,this);
 
       var rowPerPage = layout.props.numberOfRowsPerPage===undefined ? defaultPageSize : layout.props.numberOfRowsPerPage;
       var pageHandler = layout.props.pageHandler===undefined ? defaultPageHandler : layout.props.pageHandler;
       var disableSortWhenOnHeaderClick = layout.props.disableSortWhenOnHeaderClick===undefined ? defaultDisableSortWhenOnHeaderClick : layout.props.disableSortWhenOnHeaderClick;
       var disableSortArrow = layout.props.disableSortArrow===undefined ? defaultDisableSortArrow : layout.props.disableSortArrow;
-
-      console.log(disableSortArrow);
 
       if(!disableSortWhenOnHeaderClick) main.enableSortWhenOnHeaderClick();
       if(!disableSortArrow) main.enableSortArrow();

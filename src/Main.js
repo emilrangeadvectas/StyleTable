@@ -13,6 +13,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
   var colResizeManager = new ColResizeManager(backendApi);
   var isEnableSortWhenOnHeaderClick = false;
   var isEnableSortArrow = false;
+  var columns = new Array();
 
   var SelectedValuesHandler = function() {
 
@@ -122,13 +123,35 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
   return tdController;
   }
 
+    var htmlControlPanelRowForColumns = function(headers,callback) {
+      var tr = document.createElement("TR");
+
+      for(var i=0; i<headers.length; i++) {
+        if(!hideControlls){
+        var tdController = htmlStyleControlPanel(function(controlPanel){
+          callback(controlPanel,i);
+        });
+        tr.append(tdController);
+      }
+
+        tr.append(document.createElement("TD"));
+      }
+    return tr;
+  }
+
   var htmlDataTableHeader = function(headers,callback) {
 
   var table = document.createElement("TABLE");
 
-
   //Draw header
   var tr = document.createElement("TR");
+
+  var controlPanels = new Array();
+  var c = htmlControlPanelRowForColumns(headers,function(l,index){
+      controlPanels[index] = l;
+  });
+
+
   for(var i=0; i<headers.length; i++) {
   var th = document.createElement("TH");
   var tdColResize = document.createElement("TD");
@@ -148,11 +171,25 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
   }
 
 
-  table.appendChild(tr);
+
 
   var divDragColResize = document.createElement("DIV");
 
-  callback(tdColResize,th,i,headers[i]);
+
+/*
+  function(tdControlPanel){
+
+//    var identify = "#"+headers[i];
+  //  var styleSetting = styleSettingsMap.get(identify);
+//    var column = new ColumnController(styleSetting);
+
+
+    //bindControllerSettingsControlPanel(column,styleSetting,controlPanel,identify);
+
+  });*/
+
+
+  callback(tdColResize,th,i,headers[i],controlPanels[i]);
   tr.appendChild(th);
   tr.appendChild(tdColResize);
   th.appendChild(textHeader);
@@ -160,6 +197,11 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
 
 
   }
+
+  table.appendChild(tr);
+  table.append(c);
+
+
   var td = document.createElement("TD");
   tr.appendChild(td);
 
@@ -169,12 +211,12 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
   return table;
   };
 
-  var htmlControlPanelHeader = function() {
-  var th = document.createElement("TH");
-  var textHeader = document.createTextNode("STYLE CONTROLPANEL");
-  th.appendChild(textHeader);
-  return th;
-  }
+    var htmlControlPanelHeader = function() {
+      var th = document.createElement("TH");
+      var textHeader = document.createTextNode("STYLE CONTROLPANEL");
+      th.appendChild(textHeader);
+      return th;
+    }
 
   var htmlDataRow = function(rowData,callback) {
     var tr = document.createElement("TR");
@@ -237,6 +279,42 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
   return layout.qHyperCube.qDimensionInfo.length;
   };
 
+
+
+    var bindControlPanelToBackend = function(htmlControlPanelElements, identify) {
+
+      $(htmlControlPanelElements.boldButton).click(function(){
+        styleSettings.switchBold(identify);
+      });
+
+      $(htmlControlPanelElements.borderButton).click(function(){
+        styleSettings.switchBorder(identify);
+      });
+
+      $(htmlControlPanelElements.colorInput).change(function(){
+        styleSettings.setColor(identify,$(this).val());
+      });
+
+      $(htmlControlPanelElements.unsetColorButton).click(function(){
+        styleSettings.unsetColor(identify);
+        $(htmlControlPanelElements.colorInput).val("#000000");
+      });
+    }
+
+
+    var ColumnController = function(styleSetting) {
+
+
+      this.tds = new Array();
+      this.updateStyle = function() {
+        for(var i=0; i<this.tds.length; i++) {
+          var td = this.tds[i];
+          if(styleSetting.color) td.style.backgroundColor = styleSetting.color;
+        }
+        if(this.afterUpdateStyleCallback) this.afterUpdateStyleCallback();
+      }
+    }
+
   // RowController handles control panel logic form style settings and updating style on html rows
   var RowController = function(tr,identify,styleSetting,index) {
 
@@ -292,40 +370,16 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
   tds[tds.length-3].style.borderRight = "1px solid #000";
   }
 
-  if(controlPanel!==null) {
-  controlPanel.boldButton.style.fontWeight = styleSetting.bold===true ? "bold" : "normal";
-  controlPanel.borderButton.style.fontWeight = styleSetting.border===true ? "bold" : "normal";
-  controlPanel.colorInput.value = styleSetting.color ? styleSetting.color :"#000000";
-  }
+    if(this.afterUpdateStyleCallback) this.afterUpdateStyleCallback();
   };
-
-  this.addControlPanel = function(_controlPanel) {
-
-  controlPanel = _controlPanel;
-  $(controlPanel.boldButton).click(function(){
-  styleSettings.switchBold(identify);
-  });
-
-  $(controlPanel.borderButton).click(function(){
-  styleSettings.switchBorder(identify);
-  });
-
-  $(controlPanel.colorInput).change(function(){
-  styleSettings.setColor(identify,$(this).val());
-  });
-
-  $(controlPanel.unsetColorButton).click(function(){
-  styleSettings.unsetColor(identify);
-  $(controlPanel.colorInput).val("#000000");
-  });
-  }
 
   }
 
   // Data Row hold the html data for a row and what identify-hash the row has
-  var DataRow = function(tr,identify) {
-  this.tr = tr;
-  this.identify = identify;
+  var DataRow = function(tr,identify,tds) {
+    this.tr = tr;
+    this.identify = identify;
+    this.tds = tds;
   }
 
   var getHeaders = function() {
@@ -350,39 +404,58 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
   return hash;
   }
 
-  var getDataRows = function(data) {
-  var qMatrix = data.qMatrix;
-  var trs = new Array();
-  for(var i=0; i<qMatrix.length; i++) {
-  var rowData = qMatrix[i];
-  var tr = htmlDataRow(qMatrix[i],function(u,i,span,td){
-    var v = selectedValuesHandler.addValue(u,i,span);
-    (function(v){td.onclick= function(){ v.click(); }})(v);
-  });
-  var dataRow = new DataRow(tr,calcIdentifyHash(rowData));
-  trs.push(new DataRow(tr,calcIdentifyHash(rowData)));
+    var getDataRows = function(data) {
+      var qMatrix = data.qMatrix;
+      var trs = new Array();
+      for(var i=0; i<qMatrix.length; i++) {
+        var rowData = qMatrix[i];
+        var tds = new Array();
+        var tr = htmlDataRow(qMatrix[i],function(u,i,span,td,y){
+          tds.push(td);
+          var v = selectedValuesHandler.addValue(u,i,span);
+          (function(v){td.onclick= function(){ v.click(); }})(v);
+        });
+        var dataRow = new DataRow(tr,calcIdentifyHash(rowData));
+        trs.push(new DataRow(tr,calcIdentifyHash(rowData),tds));
+      }
+      return trs;
+    };
+
+  var bindControllerSettingsControlPanel = function(row,styleSetting,controlPanel,identify) {
+    if(!controlPanel) return;
+
+    bindControlPanelToBackend(controlPanel,identify);
+    row.afterUpdateStyleCallback = function() {
+      controlPanel.boldButton.style.fontWeight = styleSetting.bold===true ? "bold" : "normal";
+      controlPanel.borderButton.style.fontWeight = styleSetting.border===true ? "bold" : "normal";
+      controlPanel.colorInput.value = styleSetting.color ? styleSetting.color :"#000000";
+    };
+    row.updateStyle();
   }
-  return trs;
-  };
 
-  var requestAndDrawData = function(top,height,table,callbackWhenDone) {
+    var requestAndDrawData = function(top,height,table,callbackWhenDone) {
 
-  var requestPages = [{
-  qTop: top,
-  qLeft: 0,
-  qWidth: getHeaders().length, //TODO: figure oout if this is the correct way to view all columns
-  qHeight: height
-  }];
-  // first, get data from backend api and build and append html rows based on data...
-  backendApi.getData( requestPages ).then( function ( dataPages ) {
-  if( dataPages.length!==1 ) throw "can only draw one data page at a time";
-  var dataPage = dataPages[0];
-  var trs = getDataRows(dataPage); // build html row based on data
+      var requestPages = [{
+      qTop: top,
+      qLeft: 0,
+      qWidth: getHeaders().length, //TODO: figure oout if this is the correct way to view all columns
+      qHeight: height
+      }];
+      // first, get data from backend api and build and append html rows based on data...
+      backendApi.getData( requestPages ).then( function ( dataPages ) {
+      if( dataPages.length!==1 ) throw "can only draw one data page at a time";
+      var dataPage = dataPages[0];
+      var trs = getDataRows(dataPage); // build html row based on data
 
-  for(var i=0; i<trs.length; i++) {
-  var tr = trs[i].tr;
-  table.appendChild(tr);
-  }
+      for(var i=0; i<trs.length; i++) {
+        var tr = trs[i].tr;
+        table.appendChild(tr);
+
+        for(var c=0; c<columns.length; c++) {
+          var tdd = trs[i].tds[c];
+          columns[c].tds.push(tdd);
+        }
+      }
 
   //...then get style settings from backend
   styleSettings.getStyleSettings(function(styleSettingsMap){
@@ -400,7 +473,9 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
 
   if(!hideControlls) { // TODO: force hide if in "done"-mode
   var tdController = htmlStyleControlPanel(function(controlPanel){
-  row.addControlPanel(controlPanel);
+    //(function(row,styleSetting,controlPanel,identify){
+      bindControllerSettingsControlPanel(row,styleSetting,controlPanel,identify);
+    //})(row,styleSetting,controlPanel,identify);
   });
   tr.appendChild( tdController )
   }
@@ -415,44 +490,59 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
   });
 }
 
-  // (re)draw to canvas (root div and table(headers))
-  // @return root div and table
-  var redraw = function($element,layout) {
+    // (re)draw to canvas (root div and table(headers))
+    // @return root div and table
+    var redraw = function($element,layout,callback) {
 
-  $element.empty();
-  var rootDivAndTable = htmlRootDivAndTable(function(td,th,column,columnText){
-    colResizeManager.addColResizeDragElement(td,th,columnText);
-  });
-  $element.append(rootDivAndTable.rootDiv);
-  return rootDivAndTable;
-  };
+      styleSettings.getStyleSettings(function(styleSettingsMap){
+        $element.empty();
+        var rootDivAndTable = htmlRootDivAndTable(function(td,th,column,columnText,m){
 
-  // Sets Main to works as "Scroll mode" (load data while scroll down)
-  this.scrollMode = function(rowsPerPage) {
 
-  var elements = redraw($element,layout); // draw canvas
-  var top = 0; // from what index to fetch data next
+          // Add col-reize handler on headers
+          colResizeManager.addColResizeDragElement(td,th,columnText);
 
-  // Handle scrolldown
-  var scrolldownHandler = new ScrolldownHandler(elements.rootDiv,
+          // Add (column)ControlPanel handler to header
+          var identify = "#"+columnText;
+          var styleSetting = styleSettingsMap.get(identify);
+          var columnController = new ColumnController(styleSetting);
+          bindControllerSettingsControlPanel(columnController,styleSetting,m,identify);
+          columns[column] = columnController;
 
-  function(callback) { // defines function to be called when scrollhander tells it is time to fetch more data to table. call callback when data have been fetched
+        });
+        $element.append(rootDivAndTable.rootDiv);
+        callback(rootDivAndTable);
+      });
+    };
 
-  requestAndDrawData(top,rowsPerPage,elements.table, // fetch and draw data
-  function(next,end) {
-  top = next;  // keep track of what "index"(top) to get data from next
-  callback(end); // tell scrollhandler that data have been fetch and drawn. (it is now secure(thread safe) for scrollhandler to call fetch adn draw more data)
-  // param end. Tells if there are no more data to be fecth
+    // Sets Main to works as "Scroll mode" (load data while scroll down)
+    this.scrollMode = function(rowsPerPage) {
 
-  // update style on the new rows. (TODO: now it is all rows. Fix so only required rows are update (all new and the last before them))
-  for(var i=0; i<rows.length; i++) {
-  rows[i].updateStyle();
-  }
-  }
-  );
-  }
-  );
-  }
+      redraw($element,layout,function(elements) {
+
+        var top = 0; // from what index to fetch data next
+
+        // Handle scrolldown
+        var scrolldownHandler = new ScrolldownHandler(elements.rootDiv,function(callback) { // defines function to be called when scrollhander tells it is time to fetch more data to table. call callback when data have been fetched
+
+          requestAndDrawData(top,rowsPerPage,elements.table,function(next,end) {
+            top = next;  // keep track of what "index"(top) to get data from next
+            callback(end); // tell scrollhandler that data have been fetch and drawn. (it is now secure(thread safe) for scrollhandler to call fetch adn draw more data)
+            // param end. Tells if there are no more data to be fecth
+
+            // update style on the new rows. (TODO: now it is all rows. Fix so only required rows are update (all new and the last before them))
+            for(var i=0; i<rows.length; i++) {
+              rows[i].updateStyle();
+            }
+
+            for(var i=0; i<columns.length; i++) {
+              columns[i].updateStyle();
+            }
+
+          });
+        });
+      });
+    }
   };
 
   return Main;
