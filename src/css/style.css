@@ -9,7 +9,7 @@
     border-right: 1px solid #e6e6e6;
 }
 
-.qv-object-StyleTable th:hover {
+.qv-object-StyleTable th.clicksort:hover {
     background: #f8f8f8;
     cursor: pointer;
 }
@@ -21,7 +21,7 @@
   padding: 1px;
 }
 
-.qv-object-StyleTable th:active {
+.qv-object-StyleTable th.clicksort:active {
     color: #eee;
     background: #444;
 }

@@ -11,7 +11,8 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
   var hideControlls = hideControlls;
   var rows = new Array();
   var colResizeManager = new ColResizeManager(backendApi);
-
+  var isEnableSortWhenOnHeaderClick = false;
+  var isEnableSortArrow = false;
 
   var SelectedValuesHandler = function() {
 
@@ -74,6 +75,12 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
 
   var selectedValuesHandler = new SelectedValuesHandler();
 
+  this.enableSortWhenOnHeaderClick = function() {
+    isEnableSortWhenOnHeaderClick = true;
+  }
+  this.enableSortArrow = function() {
+    isEnableSortArrow = true;
+  }
 
   /*                                                                                                            */
   /* Html builders - these method takes care of building html-element based on param data (and nothing else)    */
@@ -129,13 +136,16 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
 
   var textHeader = document.createTextNode(headers[i]);
 
-  if(getCurrentSort()[0]===i) {
-  var img = document.createElement("IMG");
-  img.src = "/extensions/StyleTable/img/arrow.png";
-  th.appendChild(img);
+  if(isEnableSortArrow && getCurrentSort()[0]===i) {
+    var img = document.createElement("IMG");
+    img.src = "/extensions/StyleTable/img/arrow.png";
+    th.appendChild(img);
   }
 
-  (function(i){  th.onclick= function(){  setSort(i); };  })(i); //TODO: move this logic to other function. html-method should only handle build html
+  if(isEnableSortWhenOnHeaderClick) {
+    (function(i){  th.onclick= function(){  setSort(i); };  })(i); //TODO: move this logic to other function. html-method should only handle build html
+    $(th).addClass("clicksort");
+  }
 
 
   table.appendChild(tr);
