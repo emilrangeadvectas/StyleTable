@@ -108,6 +108,7 @@ define( ["./Main","text!./css/style.css"],
       var disableSortWhenOnHeaderClick = layout.props.disableSortWhenOnHeaderClick===undefined ? defaultDisableSortWhenOnHeaderClick : layout.props.disableSortWhenOnHeaderClick;
       var disableSortArrow = layout.props.disableSortArrow===undefined ? defaultDisableSortArrow : layout.props.disableSortArrow;
 
+      if(false) main.enableSelectOnValues();
       if(!disableSortWhenOnHeaderClick) main.enableSortWhenOnHeaderClick();
       if(!disableSortArrow) main.enableSortArrow();
 

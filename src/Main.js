@@ -13,6 +13,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
   var colResizeManager = new ColResizeManager(backendApi);
   var isEnableSortWhenOnHeaderClick = false;
   var isEnableSortArrow = false;
+  var isEnableSelectOnValues = false;
   var columns = new Array();
 
   var SelectedValuesHandler = function() {
@@ -48,6 +49,10 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
 
   self.selectValues(dimIndex, [rowIndex], true);
 
+  }
+
+  this.enableSelectOnValues = function() {
+    isEnableSelectOnValues = true;
   }
 
   this.addValue = function(dimIndex,rowIndex,span) {
@@ -137,15 +142,11 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
 
     var htmlControlPanelRowForColumns = function(headers,callback) {
       var tr = document.createElement("TR");
-
       for(var i=0; i<headers.length; i++) {
-        if(!hideControlls){
         var tdController = htmlStyleControlPanel(function(controlPanel){
           callback(controlPanel,i);
         },[0,1]);
         tr.append(tdController);
-      }
-
         tr.append(document.createElement("TD"));
       }
     return tr;
@@ -159,14 +160,15 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
   var tr = document.createElement("TR");
 
   var controlPanels = new Array();
-  var c = htmlControlPanelRowForColumns(headers,function(l,index){
-      controlPanels[index] = l;
-  });
-
+  if(!hideControlls){
+    var c = htmlControlPanelRowForColumns(headers,function(l,index){
+        controlPanels[index] = l;
+    });
+  }
 
   for(var i=0; i<headers.length; i++) {
   var th = document.createElement("TH");
-  var tdColResize = document.createElement("TD");
+  var tdColResize = document.createElement("TH");
   $(tdColResize).addClass("resizeGrab");
 
   var textHeader = document.createTextNode(headers[i]);
@@ -188,19 +190,6 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
   var divDragColResize = document.createElement("DIV");
 
 
-/*
-  function(tdControlPanel){
-
-//    var identify = "#"+headers[i];
-  //  var styleSetting = styleSettingsMap.get(identify);
-//    var column = new ColumnController(styleSetting);
-
-
-    //bindControllerSettingsControlPanel(column,styleSetting,controlPanel,identify);
-
-  });*/
-
-
   callback(tdColResize,th,i,headers[i],controlPanels[i]);
   tr.appendChild(th);
   tr.appendChild(tdColResize);
@@ -211,8 +200,9 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
   }
 
   table.appendChild(tr);
-  table.append(c);
-
+  if(!hideControlls){
+      table.append(c);
+    }
 
   var td = document.createElement("TD");
   tr.appendChild(td);
@@ -425,8 +415,10 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
         var tds = new Array();
         var tr = htmlDataRow(qMatrix[i],function(u,i,span,td,y){
           tds.push(td);
-          var v = selectedValuesHandler.addValue(u,i,span);
-          (function(v){td.onclick= function(){ v.click(); }})(v);
+          if(isEnableSelectOnValues) {
+            var v = selectedValuesHandler.addValue(u,i,span);
+            (function(v){td.onclick= function(){ v.click(); }})(v);
+          }
         });
         var dataRow = new DataRow(tr,calcIdentifyHash(rowData));
         trs.push(new DataRow(tr,calcIdentifyHash(rowData),tds));
