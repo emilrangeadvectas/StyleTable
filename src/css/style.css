@@ -13,6 +13,11 @@
     background: #f8f8f8;
     cursor: pointer;
 }
+.qv-object-StyleTable .root {
+    overflow: hidden;
+    overflow-x:hidden;
+    overflow-y: scroll;
+}
 
 .qv-object-StyleTable .resizeGrab {
   cursor: e-resize;

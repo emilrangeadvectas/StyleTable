@@ -230,14 +230,15 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
 
     var htmlRootDivAndTable = function(callback) {
       var rootDiv = document.createElement("DIV");
+      $(rootDiv).addClass("root");
       var canvasWidth = $element[0].clientWidth;
       var canvasHeight = $element[0].clientHeight;
       rootDiv.style.width = canvasWidth+"px";
       rootDiv.style.height = canvasHeight+"px";
-      rootDiv.style.overflowY = "scroll";
+      //rootDiv.style.overflowY = "scroll";
 
       var table = htmlDataTableHeader(getHeaders(),callback);
-      table.style.width = (canvasWidth-10)+"px";
+      table.style.width = (canvasWidth-20)+"px";
       rootDiv.appendChild(table);
       return { "rootDiv":rootDiv, "table":table};
     }
@@ -463,7 +464,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
               tr.appendChild( tdController )
             }
             else {
-              tr.append( document.createElement("TD") );
+              tr.appendChild( document.createElement("TD") );
             }
             rows[globalRowIndex] = row;  // save all row controllers at global
           }
