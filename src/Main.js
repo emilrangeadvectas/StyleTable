@@ -83,45 +83,57 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
     isEnableSortArrow = true;
   }
 
-  /*                                                                                                            */
-  /* Html builders - these method takes care of building html-element based on param data (and nothing else)    */
-  /*                                                                                                            */
-  var htmlStyleControlPanel = function(controlInputsCallback) {
+    /*                      */
+    /* Html builders - these method takes care of building html-element based on param data (and nothing else)    */
+    /* @param controlInputsCallback
+    /* @param functions Array[integers]. Define what function controlpanal should have (bold text, border...)
+    /*                                   0=bold, 1=background color, 2=border
+    /*                                                                                                            */
+    var htmlStyleControlPanel = function(controlInputsCallback,functions) {
 
-  var tdController = document.createElement("TD");
+      if(functions===undefined) functions = [0,1,2]; // if param functions not defined. Use these functions
 
-  // "Set to bold"-button
-  var boldButton = document.createElement("BUTTON");
-  var textBold = document.createTextNode("Bold")
-  boldButton.appendChild(textBold);
-  tdController.appendChild(boldButton);
+      var tdController = document.createElement("TD");
+      var controlInputs = new Object();
 
-  // Background color picker
-  var colorInput = document.createElement("INPUT");
-  colorInput.type = "color";
-  tdController.appendChild(colorInput);
+      if(functions.indexOf(0)!==-1) {
+        // "Set to bold"-button
+        var boldButton = document.createElement("BUTTON");
+        var textBold = document.createTextNode("Bold")
+        boldButton.appendChild(textBold);
+        tdController.appendChild(boldButton);
+        controlInputs.boldButton = boldButton;
+      }
 
-  // "Unset color"-button
-  var unsetColorButton = document.createElement("BUTTON");
-  var textUnsetColor = document.createTextNode("Unset color");
-  unsetColorButton.appendChild(textUnsetColor);
-  tdController.appendChild(unsetColorButton);
+      if(functions.indexOf(1)!==-1) {
+        // Background color picker
+        var colorInput = document.createElement("INPUT");
+        colorInput.type = "color";
+        tdController.appendChild(colorInput);
+        controlInputs.colorInput = colorInput;
 
-  // "Border"-button
-  var borderButton = document.createElement("BUTTON");
-  var textBorder = document.createTextNode("Border")
-  borderButton.appendChild(textBorder);
-  tdController.appendChild(borderButton);
+        // "Unset color"-button
+        var unsetColorButton = document.createElement("BUTTON");
+        var textUnsetColor = document.createTextNode("Unset color");
+        unsetColorButton.appendChild(textUnsetColor);
+        tdController.appendChild(unsetColorButton);
+        controlInputs.unsetColorButton = unsetColorButton;
 
-  var o = new Object();
-  o.boldButton = boldButton;
-  o.borderButton = borderButton;
-  o.unsetColorButton = unsetColorButton;
-  o.colorInput = colorInput;
-  if(controlInputsCallback) controlInputsCallback(o);
+      }
 
-  return tdController;
-  }
+      if(functions.indexOf(2)!==-1) {
+        // "Border"-button
+        var borderButton = document.createElement("BUTTON");
+        var textBorder = document.createTextNode("Border")
+        borderButton.appendChild(textBorder);
+        tdController.appendChild(borderButton);
+        controlInputs.borderButton = borderButton;
+      }
+
+      if(controlInputsCallback) controlInputsCallback(controlInputs);
+
+      return tdController;
+    }
 
     var htmlControlPanelRowForColumns = function(headers,callback) {
       var tr = document.createElement("TR");
@@ -130,7 +142,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
         if(!hideControlls){
         var tdController = htmlStyleControlPanel(function(controlPanel){
           callback(controlPanel,i);
-        });
+        },[0,1]);
         tr.append(tdController);
       }
 
@@ -351,7 +363,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
 
   for(var i=0; i<tds.length-2; i++) {
   var td = tds[i];
-  td.style.backgroundColor = styleSetting.color;
+  if(styleSetting.color) td.style.backgroundColor = styleSetting.color;
   td.style.fontWeight = styleSetting.bold === true ? "bold" : "normal"
   if(styleSetting.border === true && styleAbove!==null) {
   if(styleAbove.border!==true) aboveRowController.tds[i].style.borderBottom = "1px solid #000";
@@ -427,68 +439,62 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
     bindControlPanelToBackend(controlPanel,identify);
     row.afterUpdateStyleCallback = function() {
       controlPanel.boldButton.style.fontWeight = styleSetting.bold===true ? "bold" : "normal";
-      controlPanel.borderButton.style.fontWeight = styleSetting.border===true ? "bold" : "normal";
+      if(controlPanel.borderButton) controlPanel.borderButton.style.fontWeight = styleSetting.border===true ? "bold" : "normal";
       controlPanel.colorInput.value = styleSetting.color ? styleSetting.color :"#000000";
     };
     row.updateStyle();
   }
 
     var requestAndDrawData = function(top,height,table,callbackWhenDone) {
-
       var requestPages = [{
-      qTop: top,
-      qLeft: 0,
-      qWidth: getHeaders().length, //TODO: figure oout if this is the correct way to view all columns
-      qHeight: height
+        qTop: top,
+        qLeft: 0,
+        qWidth: getHeaders().length, //TODO: figure oout if this is the correct way to view all columns
+        qHeight: height
       }];
+
       // first, get data from backend api and build and append html rows based on data...
       backendApi.getData( requestPages ).then( function ( dataPages ) {
-      if( dataPages.length!==1 ) throw "can only draw one data page at a time";
-      var dataPage = dataPages[0];
-      var trs = getDataRows(dataPage); // build html row based on data
-
-      for(var i=0; i<trs.length; i++) {
-        var tr = trs[i].tr;
-        table.appendChild(tr);
-
-        for(var c=0; c<columns.length; c++) {
-          var tdd = trs[i].tds[c];
-          columns[c].tds.push(tdd);
+        if( dataPages.length!==1 ) throw "can only draw one data page at a time";
+        var dataPage = dataPages[0];
+        var trs = getDataRows(dataPage); // build html row based on data
+        for(var i=0; i<trs.length; i++) {
+          var tr = trs[i].tr;
+          table.appendChild(tr);
+          for(var c=0; c<columns.length; c++) {
+            var tdd = trs[i].tds[c];
+            columns[c].tds.push(tdd);
+          }
         }
-      }
 
-  //...then get style settings from backend
-  styleSettings.getStyleSettings(function(styleSettingsMap){
+        //...then get style settings from backend
+        styleSettings.getStyleSettings(function(styleSettingsMap){ // TODO: this is done in the begining (redraw) so no need to get that data again... keep this data is some variable?
 
-  //...last, build RowControllers (and based on variable, build control panels)
-  for(var i=0; i<trs.length; i++) {
+          //...last, build RowControllers (and based on variable, build control panels)
+          for(var i=0; i<trs.length; i++) {
+            var globalRowIndex = top+i;
+            var tr = trs[i].tr;
+            var identify = trs[i].identify;
+            var styleSetting = styleSettingsMap.get(identify);
 
-  var globalRowIndex = top+i;
+            var row = new RowController(tr,identify,styleSetting,globalRowIndex);
 
-  var tr = trs[i].tr;
-  var identify = trs[i].identify;
-  var styleSetting = styleSettingsMap.get(identify);
+            if(!hideControlls) { // TODO: force hide if in "done"-mode
+              var tdController = htmlStyleControlPanel(function(controlPanel){
+                  bindControllerSettingsControlPanel(row,styleSetting,controlPanel,identify);
+              });
+              tr.appendChild( tdController )
+            }
+            rows[globalRowIndex] = row;  // save all row controllers at global
+          }
 
-  var row = new RowController(tr,identify,styleSetting,globalRowIndex);
-
-  if(!hideControlls) { // TODO: force hide if in "done"-mode
-  var tdController = htmlStyleControlPanel(function(controlPanel){
-    //(function(row,styleSetting,controlPanel,identify){
-      bindControllerSettingsControlPanel(row,styleSetting,controlPanel,identify);
-    //})(row,styleSetting,controlPanel,identify);
-  });
-  tr.appendChild( tdController )
-  }
-  rows[globalRowIndex] = row;  // save all row controllers at global
-  }
-
-  var qArea = dataPage.qArea;
-  var nextTop = qArea.qTop+qArea.qHeight;
-  var isNoMoreData = qArea.qHeight===0;
-  callbackWhenDone(nextTop,isNoMoreData);
-  });
-  });
-}
+          var qArea = dataPage.qArea;
+          var nextTop = qArea.qTop+qArea.qHeight;
+          var isNoMoreData = qArea.qHeight===0;
+          callbackWhenDone(nextTop,isNoMoreData);
+        });
+      });
+    }
 
     // (re)draw to canvas (root div and table(headers))
     // @return root div and table
@@ -530,14 +536,15 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
             callback(end); // tell scrollhandler that data have been fetch and drawn. (it is now secure(thread safe) for scrollhandler to call fetch adn draw more data)
             // param end. Tells if there are no more data to be fecth
 
+            for(var i=0; i<columns.length; i++) {
+              columns[i].updateStyle();
+            }
+
             // update style on the new rows. (TODO: now it is all rows. Fix so only required rows are update (all new and the last before them))
             for(var i=0; i<rows.length; i++) {
               rows[i].updateStyle();
             }
 
-            for(var i=0; i<columns.length; i++) {
-              columns[i].updateStyle();
-            }
 
           });
         });
