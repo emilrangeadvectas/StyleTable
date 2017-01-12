@@ -322,6 +322,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
         for(var i=0; i<this.tds.length; i++) {
           var td = this.tds[i];
           if(styleSetting.color) td.style.backgroundColor = styleSetting.color;
+          if(styleSetting.bold) td.style.fontWeight = "bold";
         }
         if(this.afterUpdateStyleCallback) this.afterUpdateStyleCallback();
       }
@@ -364,7 +365,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
   for(var i=0; i<tds.length-2; i++) {
   var td = tds[i];
   if(styleSetting.color) td.style.backgroundColor = styleSetting.color;
-  td.style.fontWeight = styleSetting.bold === true ? "bold" : "normal"
+  if(styleSetting.bold) td.style.fontWeight = "bold";
   if(styleSetting.border === true && styleAbove!==null) {
   if(styleAbove.border!==true) aboveRowController.tds[i].style.borderBottom = "1px solid #000";
   }
