@@ -223,7 +223,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
         td.appendChild(span);
         td.appendChild(elementText);
         $(td).addClass(u<getNumberOfDimensions() ? "dim" : "mes");
-        callback(u,rowData[u].qElemNumber,span,td);
+        callback(u,rowData[u].qElemNumber,span,td,0,td2);
       }
       return tr;
     }
@@ -297,8 +297,10 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
       this.tds = new Array();
       this.updateStyle = function() {
         for(var i=0; i<this.tds.length; i++) {
-          var td = this.tds[i];
+          var td = this.tds[i][0];
+          var td2 = this.tds[i][1]; // this is a "dummy" TD cell that is under the grab-resize-th in header. It also has to be colored.
           if(styleSetting.color) td.style.backgroundColor = styleSetting.color;
+          if(styleSetting.color) td2.style.backgroundColor = styleSetting.color;
           if(styleSetting.bold) td.style.fontWeight = "bold";
         }
         if(this.afterUpdateStyleCallback) this.afterUpdateStyleCallback();
@@ -398,8 +400,8 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
       for(var i=0; i<qMatrix.length; i++) {
         var rowData = qMatrix[i];
         var tds = new Array();
-        var tr = htmlDataRow(qMatrix[i],function(u,i,span,td,y){
-          tds.push(td);
+        var tr = htmlDataRow(qMatrix[i],function(u,i,span,td,y,td2){
+          tds.push([td,td2]); // td2 is the cell under grab resize header
           if(isEnableSelectOnValues) {
             var v = selectedValuesHandler.addValue(u,i,span);
             (function(v){td.onclick= function(){ v.click(); }})(v);
@@ -423,7 +425,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
       row.updateStyle();
     }
 
-    var requestAndDrawData = function(top,height,table,callbackWhenDone) {
+    var requestAndDrawData = function(top,height,table,callbackWhenDone,styleSettingsMap) {
       var requestPages = [{
         qTop: top,
         qLeft: 0,
@@ -445,35 +447,31 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
           }
         }
 
-        //...then get style settings from backend
-        styleSettings.getStyleSettings(function(styleSettingsMap){ // TODO: this is done in the begining (redraw) so no need to get that data again... keep this data is some variable?
+        //...last, build RowControllers (and based on variable, build control panels)
+        for(var i=0; i<trs.length; i++) {
+          var globalRowIndex = top+i;
+          var tr = trs[i].tr;
+          var identify = trs[i].identify;
+          var styleSetting = styleSettingsMap.get(identify);
 
-          //...last, build RowControllers (and based on variable, build control panels)
-          for(var i=0; i<trs.length; i++) {
-            var globalRowIndex = top+i;
-            var tr = trs[i].tr;
-            var identify = trs[i].identify;
-            var styleSetting = styleSettingsMap.get(identify);
+          var row = new RowController(tr,identify,styleSetting,globalRowIndex);
 
-            var row = new RowController(tr,identify,styleSetting,globalRowIndex);
-
-            if(!hideControlls) { // TODO: force hide if in "done"-mode
-              var tdController = htmlStyleControlPanel(function(controlPanel){
-                  bindControllerSettingsControlPanel(row,styleSetting,controlPanel,identify);
-              });
-              tr.appendChild( tdController )
-            }
-            else {
-              tr.appendChild( document.createElement("TD") );
-            }
-            rows[globalRowIndex] = row;  // save all row controllers at global
+          if(!hideControlls) { // TODO: force hide if in "done"-mode
+            var tdController = htmlStyleControlPanel(function(controlPanel){
+                bindControllerSettingsControlPanel(row,styleSetting,controlPanel,identify);
+            });
+            tr.appendChild( tdController )
           }
+          else {
+            tr.appendChild( document.createElement("TD") );
+          }
+          rows[globalRowIndex] = row;  // save all row controllers at global
+        }
 
-          var qArea = dataPage.qArea;
-          var nextTop = qArea.qTop+qArea.qHeight;
-          var isNoMoreData = qArea.qHeight===0;
-          callbackWhenDone(nextTop,isNoMoreData);
-        });
+        var qArea = dataPage.qArea;
+        var nextTop = qArea.qTop+qArea.qHeight;
+        var isNoMoreData = qArea.qHeight===0;
+        callbackWhenDone(nextTop,isNoMoreData);
       });
     }
 
@@ -497,14 +495,14 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
 
         });
         $element.append(rootDivAndTable.rootDiv);
-        callback(rootDivAndTable);
+        callback(rootDivAndTable,styleSettingsMap);
       });
     };
 
     // Sets Main to works as "Scroll mode" (load data while scroll down)
     this.scrollMode = function(rowsPerPage) {
 
-      redraw($element,layout,function(elements) {
+      redraw($element,layout,function(elements,styleSettingsMap) {
 
         var top = 0; // from what index to fetch data next
 
@@ -525,7 +523,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
               rows[i].updateStyle();
             }
 
-          });
+          },styleSettingsMap);
         });
       });
     }
