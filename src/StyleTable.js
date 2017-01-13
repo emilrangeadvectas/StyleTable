@@ -99,8 +99,6 @@ define( ["./Main","text!./css/style.css"],
             },
     paint: function ( $element, layout ) {
 
-      console.log(layout);
-
       var main = new Main(this.backendApi,$element, layout,!layout.props.showStyleSettings,this);
 
       var rowPerPage = layout.props.numberOfRowsPerPage===undefined ? defaultPageSize : layout.props.numberOfRowsPerPage;

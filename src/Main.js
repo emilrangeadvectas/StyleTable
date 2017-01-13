@@ -193,11 +193,14 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
       }
 
       if(hideControlls) {
-        var td = document.createElement("TD");
-        tr.appendChild(td);
+        var th = document.createElement("TH");
+        $(th).addClass("last");
+        tr.appendChild(th);
       }
       else {
-        tr.appendChild(htmlControlPanelHeader());
+        var th = htmlControlPanelHeader();
+        $(th).addClass("last");
+        tr.appendChild(th);
       }
 
       return table;
@@ -215,6 +218,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
       for(var u=0; u<rowData.length; u++) {
         var td = document.createElement("TD");
         var td2 = document.createElement("TD");
+        $(td2).addClass("resizeGrab");
         td2.style.padding=0;
         var elementText = document.createTextNode(rowData[u].qText)
         var span = document.createElement("SPAN");
@@ -344,14 +348,18 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
         if(styleSetting.color) td.style.backgroundColor = styleSetting.color;
         if(styleSetting.bold) td.style.fontWeight = "bold";
         if(styleSetting.border === true && styleAbove!==null) {
-        if(styleAbove.border!==true) aboveRowController.tds[i].style.borderBottom = "1px solid #000";
+        if(styleAbove.border!==true) {
+//          aboveRowController.tds[i].style.borderBottom = "1px solid #00";
+//          aboveRowController.tds[i].style.marginBottom = "4px";
+          td.style.borderTop = "1px solid #000";
+        }
       }
 
       if(styleSetting.border === true && styleBelow!==null) {
         if(styleBelow.border!==true) td.style.borderBottom = "1px solid #000";
         else td.style.borderBottom = "1px solid "+styleSetting.color;
       }
-      td.style.borderRight = "0";
+      if(styleSetting.color) td.style.borderRight = "0";
 
       }
 

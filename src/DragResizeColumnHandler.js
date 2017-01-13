@@ -6,6 +6,8 @@ define( [], function () {
 		var WidthDataContainer = function() {
 			var widths = {};
  			this.set = function(key,value,saveToBackend) {
+				value = parseInt(value);
+				if(value<10) return;
 				widths[key] = value;
 				if(saveToBackend) {
 					backendApi.applyPatches([ {"qPath":"/colwidth","qOp":"add","qValue":JSON.stringify(widths)} ],false);
