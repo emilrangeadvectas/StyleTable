@@ -14,6 +14,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
     var isEnableSortWhenOnHeaderClick = false;
     var isEnableSortArrow = false;
     var isEnableSelectOnValues = false;
+    var isEnableDragResizeColumn = false;
     var columns = new Array();
 
     var SelectedValuesHandler = function() {
@@ -81,6 +82,10 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
     }
     this.enableSortArrow = function() {
       isEnableSortArrow = true;
+    }
+
+    this.enableDragResizeColumn = function() {
+      isEnableDragResizeColumn = true;
     }
 
     /* Html builders - these method takes care of building html-element based on param data (and nothing else)    */
@@ -164,7 +169,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
       for(var i=0; i<headers.length; i++) {
         var th = document.createElement("TH");
         var tdColResize = document.createElement("TH");
-        $(tdColResize).addClass("resizeGrab");
+        $(tdColResize).addClass("columnSpace");
 
         var textHeader = document.createTextNode(headers[i]);
 
@@ -218,7 +223,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
       for(var u=0; u<rowData.length; u++) {
         var td = document.createElement("TD");
         var td2 = document.createElement("TD");
-        $(td2).addClass("resizeGrab");
+        $(td2).addClass("columnSpace");
         td2.style.padding=0;
         var elementText = document.createTextNode(rowData[u].qText)
         var span = document.createElement("SPAN");
@@ -492,7 +497,11 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
         var rootDivAndTable = htmlRootDivAndTable(function(td,th,column,columnText,m){
 
           // Add col-reize handler on headers
-          colResizeManager.addColResizeDragElement(td,th,columnText);
+          var colResizeElement = colResizeManager.addColResizeDragElement(td,th,columnText);
+          if(isEnableDragResizeColumn) {
+            colResizeElement.enableDrag();
+            $(td).addClass("resizeGrab");
+          }
 
           // Add (column)ControlPanel handler to header
           var identify = "#"+columnText;

@@ -36,6 +36,7 @@ define( [], function () {
 		var widthDataContainer = new WidthDataContainer();
 
     var ColResizeDragElement = function(html,html2,index) {
+      this.canDrag = false;
       this.html = html;
       this.index = index;
 
@@ -61,9 +62,14 @@ define( [], function () {
       this.onRelease = function() {
 				widthDataContainer.set(index,html2.offsetWidth,true);
       }
+      this.enableDrag = function() {
+        this.canDrag = true;
+      }
     }
     this.addColResizeDragElement = function(td,th,index) {
-      colResizeDragElements.push( new ColResizeDragElement(td,th,index) );
+      var colResizeElement = new ColResizeDragElement(td,th,index);
+      colResizeDragElements.push( colResizeElement );
+      return colResizeElement;
     }
 
     $(document).on('mousemove',function(e){
@@ -88,7 +94,7 @@ define( [], function () {
     $(document).on('mousedown',function(e){
       for(var i=0; i<colResizeDragElements.length; i++) {
         var dragElement = colResizeDragElements[i];
-        if(e.target===dragElement.html) {
+        if(e.target===dragElement.html && dragElement.canDrag) {
           currentDragElement = dragElement.startDrag();
         }
       }

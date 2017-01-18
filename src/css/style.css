@@ -24,14 +24,17 @@
     overflow-y: scroll;
 }
 
-.qv-object-StyleTable th.resizeGrab {
-  cursor: e-resize;
-  cursor: w-resize;
+.qv-object-StyleTable th.columnSpace {
   width: 1px;
   padding: 1px;
 }
 
-.qv-object-StyleTable td.resizeGrab {
+.qv-object-StyleTable .resizeGrab {
+  cursor: e-resize;
+  cursor: w-resize;
+}
+
+.qv-object-StyleTable td.columnSpace {
     border-right: 1px solid #e6e6e6;
 }
 

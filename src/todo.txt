@@ -30,3 +30,9 @@ BUGS?
     Export image (wait for answer from qlik community)
     
     Fix the grey line colors between styled background colors. (remove grey line?)  
+
+
+
+
+
+Fixa så inte varje inställning är i varsin grupp. Ha checkbox för enable
