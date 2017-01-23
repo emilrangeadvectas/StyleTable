@@ -365,12 +365,11 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
 
           if(isEnableSelectOnValues) {
             if(isDimension) {
-              var v = selectedValuesHandler.addValueColumn(u,i,td,td2);
-              (function(v){td.onclick= function(){ v.click(); }})(v);
+              var v = selectedValuesHandler.addValueCell(u,i,[td,td2]);
+              (function(v){td.onclick= function(){ v.switch(); }})(v);
             }
             else {
-              var v = selectedValuesHandler.addColumn(td,td2);
-              (function(v){td.onclick= function(){ v.click(); }})(v);
+              selectedValuesHandler.addCell([td,td2]);
             }
           }
 
@@ -432,7 +431,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
           }
           else {
             var td = document.createElement("TD");
-            selectedValuesHandler.addColumn(td,null);
+            selectedValuesHandler.addCell([td]);
             tr.appendChild(td);
           }
           rows[globalRowIndex] = row;  // save all row controllers at global
@@ -496,6 +495,8 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
             for(var i=0; i<rows.length; i++) {
               rows[i].updateStyle();
             }
+
+            selectedValuesHandler.refresh();
 
           },styleSettingsMap);
         });
