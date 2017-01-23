@@ -16,6 +16,11 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
     var isEnableSelectOnValues = false;
     var isEnableDragResizeColumn = false;
     var columns = new Array();
+    var currentSelectDim = null;
+
+    this.enableSelectOnValues = function() {
+      isEnableSelectOnValues = true;
+    }
 
     var SelectedValuesHandler = function() {
 
@@ -40,34 +45,43 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
       }
 
       var _click = function(dimIndex,rowIndex,span) {
-        switchValue(dimIndex,rowIndex);
-        for(var i =0; i<values.length; i++) {
-          values[i].refresh();
+
+        if(currentSelectDim===null || dimIndex===currentSelectDim) {
+          switchValue(dimIndex,rowIndex);
+          currentSelectDim = dimIndex;
+          self.selectValues(dimIndex, [rowIndex], true);
+          for(var i =0; i<values.length; i++) {
+            values[i].refresh();
+          }
         }
-        self.selectValues(dimIndex, [rowIndex], true);
+
       }
 
-      this.enableSelectOnValues = function() {
-        isEnableSelectOnValues = true;
-      }
-
-      this.addValue = function(dimIndex,rowIndex,span) {
+      this.addValue = function(dimIndex,rowIndex,td,td2) {
         var o = new Object();
         o.dimIndex = dimIndex;
         o.rowIndex = rowIndex;
-        o.span = span;
         o.click = function() {
-          _click(dimIndex,rowIndex,span);
+          _click(dimIndex,rowIndex,td,td2);
         }
         o.refresh = function() {
-          if(getValue(dimIndex,rowIndex)) {
-            var img = document.createElement("IMG");
-            img.src = "/extensions/StyleTable/img/cross.png";
-            if(span.childElementCount==0)span.appendChild(img);
+
+
+          if(dimIndex==currentSelectDim) {
+            td.style.fontWeight = "normal";
+            td2.style.fontWeight = "normal";
+            td.style.border = "0";
+            td2.style.border = "0";
+            if(getValue(dimIndex,rowIndex)) {
+              td.style.backgroundColor = "#5f5";
+              td2.style.backgroundColor = "#5f5";
+            }
+            else {
+              td.style.backgroundColor = "";
+              td2.style.backgroundColor = "";
+            }
           }
-          else {
-            span.innerHTML = "";
-          }
+
         }
         values.push(o);
         return o;
@@ -413,10 +427,11 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
       for(var i=0; i<qMatrix.length; i++) {
         var rowData = qMatrix[i];
         var tds = new Array();
-        var tr = htmlDataRow(qMatrix[i],function(u,i,span,td,y,td2){
+        var tr = htmlDataRow(qMatrix[i],function(u,i,span,td,y,td2) {
           tds.push([td,td2]); // td2 is the cell under grab resize header
-          if(isEnableSelectOnValues) {
-            var v = selectedValuesHandler.addValue(u,i,span);
+          var isDimension = u<getNumberOfDimensions();
+          if(isDimension && isEnableSelectOnValues) {
+            var v = selectedValuesHandler.addValue(u,i,td,td2);
             (function(v){td.onclick= function(){ v.click(); }})(v);
           }
         });
