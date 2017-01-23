@@ -1,4 +1,4 @@
-define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHandler"], function (StyleSettings,ScrolldownHandler,$,ColResizeManager) {
+define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHandler","./SelectedValuesHandler"], function (StyleSettings,ScrolldownHandler,$,ColResizeManager,SelectedValuesHandler) {
   'use strict';
 
   var Main = function(backendApi,$element,layout,hideControlls,self) {
@@ -16,80 +16,12 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
     var isEnableSelectOnValues = false;
     var isEnableDragResizeColumn = false;
     var columns = new Array();
-    var currentSelectDim = null;
 
     this.enableSelectOnValues = function() {
       isEnableSelectOnValues = true;
     }
 
-    var SelectedValuesHandler = function() {
-
-      var selected = new Array();
-      var values = new Array();
-
-      var switchValue = function(x,y) {
-        if(selected[x]===undefined) {
-          selected[x] = new Array();
-          selected[x][y] = true;
-          return selected[x][y];
-        }
-        selected[x][y] = selected[x][y] ? false : true;
-        return selected[x][y];
-      }
-
-      var getValue = function(x,y) {
-        if(selected[x]===undefined) {
-          return false;
-        }
-        return selected[x][y] ? true : false;
-      }
-
-      var _click = function(dimIndex,rowIndex,span) {
-
-        if(currentSelectDim===null || dimIndex===currentSelectDim) {
-          switchValue(dimIndex,rowIndex);
-          currentSelectDim = dimIndex;
-          self.selectValues(dimIndex, [rowIndex], true);
-          for(var i =0; i<values.length; i++) {
-            values[i].refresh();
-          }
-        }
-
-      }
-
-      this.addValue = function(dimIndex,rowIndex,td,td2) {
-        var o = new Object();
-        o.dimIndex = dimIndex;
-        o.rowIndex = rowIndex;
-        o.click = function() {
-          _click(dimIndex,rowIndex,td,td2);
-        }
-        o.refresh = function() {
-
-
-          if(dimIndex==currentSelectDim) {
-            td.style.fontWeight = "normal";
-            td2.style.fontWeight = "normal";
-            td.style.border = "0";
-            td2.style.border = "0";
-            if(getValue(dimIndex,rowIndex)) {
-              td.style.backgroundColor = "#5f5";
-              td2.style.backgroundColor = "#5f5";
-            }
-            else {
-              td.style.backgroundColor = "";
-              td2.style.backgroundColor = "";
-            }
-          }
-
-        }
-        values.push(o);
-        return o;
-      }
-
-    };
-
-    var selectedValuesHandler = new SelectedValuesHandler();
+    var selectedValuesHandler = new SelectedValuesHandler(self);
 
     this.enableSortWhenOnHeaderClick = function() {
       isEnableSortWhenOnHeaderClick = true;
@@ -430,10 +362,18 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
         var tr = htmlDataRow(qMatrix[i],function(u,i,span,td,y,td2) {
           tds.push([td,td2]); // td2 is the cell under grab resize header
           var isDimension = u<getNumberOfDimensions();
-          if(isDimension && isEnableSelectOnValues) {
-            var v = selectedValuesHandler.addValue(u,i,td,td2);
-            (function(v){td.onclick= function(){ v.click(); }})(v);
+
+          if(isEnableSelectOnValues) {
+            if(isDimension) {
+              var v = selectedValuesHandler.addValueColumn(u,i,td,td2);
+              (function(v){td.onclick= function(){ v.click(); }})(v);
+            }
+            else {
+              var v = selectedValuesHandler.addColumn(td,td2);
+              (function(v){td.onclick= function(){ v.click(); }})(v);
+            }
           }
+
         });
         var dataRow = new DataRow(tr,calcIdentifyHash(rowData));
         trs.push(new DataRow(tr,calcIdentifyHash(rowData),tds));
@@ -491,7 +431,9 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
             tr.appendChild( tdController )
           }
           else {
-            tr.appendChild( document.createElement("TD") );
+            var td = document.createElement("TD");
+            selectedValuesHandler.addColumn(td,null);
+            tr.appendChild(td);
           }
           rows[globalRowIndex] = row;  // save all row controllers at global
         }
