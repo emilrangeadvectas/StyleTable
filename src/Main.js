@@ -404,7 +404,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
       backendApi.getData( requestPages ).then( function ( dataPages ) {
         if( dataPages.length!==1 ) throw "can only draw one data page at a time";
         var dataPage = dataPages[0];
-        console.log(dataPage);
+        //console.log(dataPage);
         var trs = getDataRows(dataPage); // build html row based on data
         for(var i=0; i<trs.length; i++) {
           var tr = trs[i].tr;
