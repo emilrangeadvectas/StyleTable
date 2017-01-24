@@ -178,7 +178,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
         td.appendChild(span);
         td.appendChild(elementText);
         $(td).addClass(u<getNumberOfDimensions() ? "dim" : "mes");
-        callback(u,rowData[u].qElemNumber,span,td,0,td2);
+        callback(u,rowData[u].qElemNumber,span,td,0,td2,rowData[u].qIsNull);
       }
       return tr;
     }
@@ -359,12 +359,12 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
       for(var i=0; i<qMatrix.length; i++) {
         var rowData = qMatrix[i];
         var tds = new Array();
-        var tr = htmlDataRow(qMatrix[i],function(u,i,span,td,y,td2) {
+        var tr = htmlDataRow(qMatrix[i],function(u,i,span,td,y,td2,isNullValue) {
           tds.push([td,td2]); // td2 is the cell under grab resize header
           var isDimension = u<getNumberOfDimensions();
 
           if(isEnableSelectOnValues) {
-            if(isDimension) {
+            if(isDimension && !isNullValue) {
               var v = selectedValuesHandler.addValueCell(u,i,[td,td2]);
               (function(v){td.onclick= function(){ v.switch(); }})(v);
             }
@@ -404,6 +404,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
       backendApi.getData( requestPages ).then( function ( dataPages ) {
         if( dataPages.length!==1 ) throw "can only draw one data page at a time";
         var dataPage = dataPages[0];
+        console.log(dataPage);
         var trs = getDataRows(dataPage); // build html row based on data
         for(var i=0; i<trs.length; i++) {
           var tr = trs[i].tr;
