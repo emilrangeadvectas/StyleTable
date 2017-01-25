@@ -30,3 +30,8 @@ BUGS?
     Export image (wait for answer from qlik community)
     
     Fix the grey line colors between styled background colors. (remove grey line?)  
+
+
+If two dimension/mesure hsa the same title  they will share the same stylesettings and width, I think. See if this is the case and look for solution and fix.
+
+Load style for elsewhere. From a meassure?

@@ -188,6 +188,32 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
       return tr;
     }
 
+    var htmlTotalsRow = function() {
+
+      var tr = document.createElement("tr");
+      $(tr).addClass("totals");
+      var th = document.createElement("th");
+      th.colSpan=getNumberOfDimensions()*2;
+      var totalsheaderText = document.createTextNode("Totals");
+      th.appendChild(totalsheaderText);
+      tr.appendChild(th);
+
+      var grandTotalRow = layout.qHyperCube.qGrandTotalRow;
+
+      for(var i=0; i<grandTotalRow.length; i++) {
+        var measure = grandTotalRow[i];
+        var th = document.createElement("th");
+        $(th).addClass("mes");
+        var text = document.createTextNode(measure.qText);
+        th.appendChild(text);
+        th.colSpan = 2;
+        tr.appendChild(th);
+      }
+      tr.appendChild(document.createElement("th"));
+
+      return tr;
+    }
+
     var htmlRootDivAndTable = function(callback) {
       var rootDiv = document.createElement("DIV");
       $(rootDiv).addClass("root");
@@ -198,6 +224,8 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
       //rootDiv.style.overflowY = "scroll";
 
       var table = htmlDataTableHeader(getHeaders(),callback);
+      var totalsRow = htmlTotalsRow();
+      table.appendChild(totalsRow);
       table.style.width = (canvasWidth-20)+"px";
       rootDiv.appendChild(table);
       return { "rootDiv":rootDiv, "table":table};

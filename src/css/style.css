@@ -18,6 +18,17 @@
     border-right: 0;
 }
 
+.qv-object-StyleTable .totals th{
+  color: #888;
+  border-bottom: 1px solid #444;
+  font-weight: bold;
+  font-size:13px;
+}
+
+.qv-object-StyleTable .totals .mes{
+  text-align: right;
+}
+
 .qv-object-StyleTable .root {
     overflow: hidden;
     overflow-x:hidden;
