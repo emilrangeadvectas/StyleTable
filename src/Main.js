@@ -462,7 +462,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
 
           // Add col-reize handler on headers
           var colResizeElement = colResizeManager.addColResizeDragElement(td,th,columnText);
-          colResizeElement.refreshWidth(getPixelWidthByTextLength(columnText.length));
+          colResizeElement.expandDefaultWidth(getPixelWidthByTextLength(columnText.length));
           colResizeElements.push(colResizeElement);
           if(isEnableDragResizeColumn) {
             colResizeElement.enableDrag();
@@ -512,7 +512,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
 
             for(var i=0; i<colResizeElements.length; i++) {
               var width = getPixelWidthByTextLength(dataRow.qMatrixRow[i].qText.length);
-              colResizeElements[i].refreshWidth(width);
+              colResizeElements[i].expandDefaultWidth(width);
             }
 
           });

@@ -33,7 +33,7 @@ define( [], function () {
     }
 
     var widthDataContainer = new WidthDataContainer();
-    var lastX = null;
+    var lastRegisteredClientX = null;
     var colResizeDragElements = new Array();
     var currentDragElement = null;
 
@@ -43,12 +43,41 @@ define( [], function () {
       return colResizeElement;
     }
 
-    var ColResizeDragElement = function(html,html2,index) {
+    var ColResizeDragElement = function(grabElement,sizeAffectedElement,index) {
 
       this.canDrag = false;
-      this.html = html;
+      this.grabElement = grabElement;
       var defaultWidth = 50;
 
+      //This methods is to set a new default width if widther than the existing one
+      this.expandDefaultWidth = function(width) {
+        defaultWidth = width > defaultWidth ? width : defaultWidth;
+        refresh();
+      }
+      this.enableDrag = function() {
+        this.canDrag = true;
+      }
+
+      this.onRelease = function() {
+        widthDataContainer.set(index,sizeAffectedElement.offsetWidth);
+        refresh();
+      }
+
+      this.onStartDrag = function() {
+        return this;
+      }
+
+      this.onNewWidthWhenDrag = function(x) {
+        setShowWidth(parseInt(sizeAffectedElement.width) - x);
+      }
+
+      var refresh = function() {
+        setShowWidth(getWidth());
+      }
+
+      var setShowWidth = function(w) {
+        sizeAffectedElement.width = w;
+      }
 
       var getWidth = function() {
         if(widthDataContainer.get(index)===undefined) {
@@ -58,47 +87,17 @@ define( [], function () {
           return widthDataContainer.get(index);
         }
       }
-
-      this.refreshWidth = function(width) {
-        defaultWidth = width > defaultWidth ? width : defaultWidth;
-        refresh();
-      }
-
-      var refresh = function() {
-        setShowWidth(getWidth());
-      }
-
-      var setShowWidth = function(w) {
-        html2.width = w;
-      }
-
-      this.enableDrag = function() {
-        this.canDrag = true;
-      }
-
-      this.onRelease = function() {
-        widthDataContainer.set(index,html2.offsetWidth);
-        refresh();
-      }
-
-      this.startDrag = function() {
-        return this;
-      }
-
-      this.updateWidth = function(x) {
-        setShowWidth(parseInt(html2.width) - x);
-      }
     }
 
     $(document).on('mousemove',function(e){
-      if(lastX==null) {
-        lastX = e.clientX;
+      if(lastRegisteredClientX==null) {
+        lastRegisteredClientX = e.clientX;
         return;
       }
-      var dx = lastX - e.clientX;
-      lastX = e.clientX;
+      var dx = lastRegisteredClientX - e.clientX;
+      lastRegisteredClientX = e.clientX;
       if(currentDragElement) {
-        currentDragElement.updateWidth(dx);
+        currentDragElement.onNewWidthWhenDrag(dx);
       }
     });
 
@@ -112,8 +111,8 @@ define( [], function () {
     $(document).on('mousedown',function(e){
       for(var i=0; i<colResizeDragElements.length; i++) {
         var dragElement = colResizeDragElements[i];
-        if(e.target===dragElement.html && dragElement.canDrag) {
-          currentDragElement = dragElement.startDrag();
+        if(e.target===dragElement.grabElement && dragElement.canDrag) {
+          currentDragElement = dragElement.onStartDrag();
         }
       }
     });
