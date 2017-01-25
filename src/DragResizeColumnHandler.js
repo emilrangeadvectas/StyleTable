@@ -1,75 +1,93 @@
 define( [], function () {
-	'use strict';
+  'use strict';
 
   var ColResizeManager = function(backendApi) {
 
-		var WidthDataContainer = function() {
-			var widths = {};
- 			this.set = function(key,value,saveToBackend) {
-				value = parseInt(value);
-				if(value<10) return;
-				widths[key] = value;
-				if(saveToBackend) {
-					backendApi.applyPatches([ {"qPath":"/colwidth","qOp":"add","qValue":JSON.stringify(widths)} ],false);
-				}
-			}
-			this.get = function(key) {
-				return widths[key];
-			}
-			this.getFromBackend = function(key,callback) {
-				backendApi.getProperties().then(function(r){
-					var colwidth = r.colwidth;
-					if(colwidth===undefined) {
-						callback(undefined);
-					}
-					else {
-						widths[key] = colwidth[key];
-						callback(colwidth[key]);
-					}
-				});
-			}
-		}
+    var _this = this;
 
-		var lastX = null;
+    var WidthDataContainer = function() {
+
+      var widths = null;
+      var _widthDataContainer = this;
+      backendApi.getProperties().then(function(r){
+        var colwidth = r.colwidth;
+        if(colwidth===undefined) {
+          widths = {};
+        }
+        else {
+          widths = {};
+          for (var i in colwidth) {
+            widths[i] = colwidth[i];
+          }
+        }
+        _widthDataContainer.set = function(key,value) {
+          value = parseInt(value);
+          if(value<10) return;
+          widths[key] = value;
+          backendApi.applyPatches([ {"qPath":"/colwidth","qOp":"add","qValue":JSON.stringify(widths)} ],false);
+        }
+        _widthDataContainer.get = function(key) {
+          return widths[key];
+        }
+      });
+    }
+
+    var widthDataContainer = new WidthDataContainer();
+    var lastX = null;
     var colResizeDragElements = new Array();
     var currentDragElement = null;
-		var widthDataContainer = new WidthDataContainer();
 
-    var ColResizeDragElement = function(html,html2,index) {
-      this.canDrag = false;
-      this.html = html;
-      this.index = index;
-
-			widthDataContainer.getFromBackend(index,function(value){
-				setShowWidth(value);
-			});
-
-			if(widthDataContainer.get(index)===undefined) {
-				widthDataContainer.set(index,200); //TODO: make "default" longest string in dimension. (all string or just the one that can be seen?)
-			}
-
-			var setShowWidth = function(w) {
-				html2.width = w;
-			}
-
-      this.startDrag = function() {
-        html2.width = widthDataContainer.get(index);
-        return this;
-      }
-      this.updateWidth = function(x) {
-				setShowWidth(parseInt(html2.width) - x);
-      }
-      this.onRelease = function() {
-				widthDataContainer.set(index,html2.offsetWidth,true);
-      }
-      this.enableDrag = function() {
-        this.canDrag = true;
-      }
-    }
     this.addColResizeDragElement = function(td,th,index) {
       var colResizeElement = new ColResizeDragElement(td,th,index);
       colResizeDragElements.push( colResizeElement );
       return colResizeElement;
+    }
+
+    var ColResizeDragElement = function(html,html2,index) {
+
+      this.canDrag = false;
+      this.html = html;
+      var defaultWidth = 50;
+
+
+      var getWidth = function() {
+        if(widthDataContainer.get(index)===undefined) {
+          return defaultWidth;
+        }
+        else {
+          return widthDataContainer.get(index);
+        }
+      }
+
+      this.refreshWidth = function(width) {
+        defaultWidth = width > defaultWidth ? width : defaultWidth;
+        refresh();
+      }
+
+      var refresh = function() {
+        setShowWidth(getWidth());
+      }
+
+      var setShowWidth = function(w) {
+        html2.width = w;
+      }
+
+      this.enableDrag = function() {
+        this.canDrag = true;
+      }
+
+      this.onRelease = function() {
+        widthDataContainer.set(index,html2.offsetWidth);
+        refresh();
+      }
+
+      this.startDrag = function() {
+        return this;
+      }
+
+      this.updateWidth = function(x) {
+        setShowWidth(parseInt(html2.width) - x);
+      }
     }
 
     $(document).on('mousemove',function(e){
@@ -100,8 +118,6 @@ define( [], function () {
       }
     });
   }
-
-
 
   return ColResizeManager;
 });

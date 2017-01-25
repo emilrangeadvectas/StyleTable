@@ -16,6 +16,11 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
     var isEnableSelectOnValues = false;
     var isEnableDragResizeColumn = false;
     var columns = new Array();
+    var colResizeElements = new Array();
+
+    var getPixelWidthByTextLength = function(textLength) {
+      return textLength*7+5;
+    }
 
     this.enableSelectOnValues = function() {
       isEnableSelectOnValues = true;
@@ -325,10 +330,11 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
     }
 
     // Data Row hold the html data for a row and what identify-hash the row has
-    var DataRow = function(tr,identify,tds) {
+    var DataRow = function(tr,identify,tds,qMatrixRow) {
       this.tr = tr;
       this.identify = identify;
       this.tds = tds;
+      this.qMatrixRow = qMatrixRow;
     }
 
     var getHeaders = function() {
@@ -375,7 +381,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
 
         });
         var dataRow = new DataRow(tr,calcIdentifyHash(rowData));
-        trs.push(new DataRow(tr,calcIdentifyHash(rowData),tds));
+        trs.push(new DataRow(tr,calcIdentifyHash(rowData),tds,qMatrix[i]));
       }
       return trs;
     };
@@ -392,7 +398,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
       row.updateStyle();
     }
 
-    var requestAndDrawData = function(top,height,table,callbackWhenDone,styleSettingsMap) {
+    var requestAndDrawData = function(top,height,table,callbackWhenDone,styleSettingsMap,eachDataRowCallback) {
       var requestPages = [{
         qTop: top,
         qLeft: 0,
@@ -413,6 +419,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
             var tdd = trs[i].tds[c];
             columns[c].tds.push(tdd);
           }
+          if(eachDataRowCallback) eachDataRowCallback(trs[i]);
         }
 
         //...last, build RowControllers (and based on variable, build control panels)
@@ -455,6 +462,8 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
 
           // Add col-reize handler on headers
           var colResizeElement = colResizeManager.addColResizeDragElement(td,th,columnText);
+          colResizeElement.refreshWidth(getPixelWidthByTextLength(columnText.length));
+          colResizeElements.push(colResizeElement);
           if(isEnableDragResizeColumn) {
             colResizeElement.enableDrag();
             $(td).addClass("resizeGrab");
@@ -499,7 +508,14 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
 
             selectedValuesHandler.refresh();
 
-          },styleSettingsMap);
+          },styleSettingsMap,function(dataRow){
+
+            for(var i=0; i<colResizeElements.length; i++) {
+              var width = getPixelWidthByTextLength(dataRow.qMatrixRow[i].qText.length);
+              colResizeElements[i].refreshWidth(width);
+            }
+
+          });
         });
       });
     }
