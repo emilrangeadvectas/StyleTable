@@ -21,30 +21,39 @@ define( ["./Main","text!./css/style.css","./definition"],
       "definition": Definition(defaultPageSize,defaultPageHandler,defaultDisableSortWhenOnHeaderClick,defaultDisableSortArrow,defaultDisableColResize,defaultDisableSelectValues,disableGroupLabel),
       support: {
         export: true,
-        exportData: false
+        exportData: true
       },
       paint: function ( $element, layout ) {
 
-        var main = new Main(this.backendApi,$element, layout,!layout.props.showStyleSettings,this);
+        var _this = this;
+        return new Promise(function(resolve,reject){
 
-        var rowPerPage = layout.props.numberOfRowsPerPage===undefined ? defaultPageSize : layout.props.numberOfRowsPerPage;
-        var pageHandler = layout.props.pageHandler===undefined ? defaultPageHandler : layout.props.pageHandler;
-        var disableSortWhenOnHeaderClick = layout.props.disableSortWhenOnHeaderClick===undefined ? defaultDisableSortWhenOnHeaderClick : layout.props.disableSortWhenOnHeaderClick;
-        var disableSortArrow = layout.props.disableSortArrow===undefined ? defaultDisableSortArrow : layout.props.disableSortArrow;
-        var disableColResize = layout.props.disableColResize===undefined ? defaultDisableColResize : layout.props.disableColResize;
-        var disableSelectValues = layout.props.disableSelectValues===undefined ? defaultDisableSelectValues : layout.props.disableSelectValues;
+            var main = new Main(_this.backendApi,$element, layout,!layout.props.showStyleSettings,_this);
+            
+            var rowPerPage = layout.props.numberOfRowsPerPage===undefined ? defaultPageSize : layout.props.numberOfRowsPerPage;
+            var pageHandler = layout.props.pageHandler===undefined ? defaultPageHandler : layout.props.pageHandler;
+            var disableSortWhenOnHeaderClick = layout.props.disableSortWhenOnHeaderClick===undefined ? defaultDisableSortWhenOnHeaderClick : layout.props.disableSortWhenOnHeaderClick;
+            var disableSortArrow = layout.props.disableSortArrow===undefined ? defaultDisableSortArrow : layout.props.disableSortArrow;
+            var disableColResize = layout.props.disableColResize===undefined ? defaultDisableColResize : layout.props.disableColResize;
+            var disableSelectValues = layout.props.disableSelectValues===undefined ? defaultDisableSelectValues : layout.props.disableSelectValues;
 
-        if(!disableSelectValues) main.enableSelectOnValues();
-        if(!disableColResize) main.enableDragResizeColumn();
-        if(!disableSortWhenOnHeaderClick) main.enableSortWhenOnHeaderClick();
-        if(!disableSortArrow) main.enableSortArrow();
+            if(!disableSelectValues) main.enableSelectOnValues();
+            if(!disableColResize) main.enableDragResizeColumn();
+            if(!disableSortWhenOnHeaderClick) main.enableSortWhenOnHeaderClick();
+            if(!disableSortArrow) main.enableSortArrow();
 
-        if(pageHandler===1) {
-          main.scrollMode(rowPerPage);
-        }
-        else {
-          throw "Invalid page handler: "+layout.props.pageHandler;
-        }
+            if(pageHandler===1) {
+              main.scrollMode(rowPerPage);
+            }
+            else {
+              throw "Invalid page handler: "+layout.props.pageHandler;
+            }    
+
+            setTimeout(function(){ resolve(); },100);
+            
+            
+        });
+        
       }
     };
 });
