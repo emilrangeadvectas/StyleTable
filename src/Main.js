@@ -19,7 +19,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
     var colResizeElements = new Array();
 
     var getPixelWidthByTextLength = function(textLength) {
-      return textLength*7+5;
+      return textLength*8+5;
     }
 
     this.enableSelectOnValues = function() {
