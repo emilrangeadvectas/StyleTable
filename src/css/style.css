@@ -9,6 +9,12 @@
     border-right: 1px solid #e6e6e6;
 }
 
+.qv-object-StyleTable .group_label_container {
+  text-align: center;
+  font-size:13px;
+  font-weight: bold;
+}
+
 .qv-object-StyleTable th.clicksort:hover {
     background: #f8f8f8;
     cursor: pointer;

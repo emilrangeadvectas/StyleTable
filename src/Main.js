@@ -103,9 +103,66 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
       return tr;
     }
 
-    var htmlDataTableHeader = function(headers,callback) {
+    var groupLabelHeader = function() {
 
+      var dimensionAndMesasures = layout.qHyperCube.qDimensionInfo.concat(layout.qHyperCube.qMeasureInfo);
+
+      var foundLabelHeader = false;
+      for(var i=0; i<dimensionAndMesasures.length; i++) {
+        if(dimensionAndMesasures[i].propGroupLabel) {
+          foundLabelHeader = true;
+          break;
+        }
+      }
+      if(!foundLabelHeader) return null;
+
+      var o = [];
+      var olabel = dimensionAndMesasures[0].propGroupLabel;
+      var size = 0;
+      for(var i=0; i<dimensionAndMesasures.length+1; i++) {
+
+        var label = i<dimensionAndMesasures.length ?
+                        dimensionAndMesasures[i].propGroupLabel :
+                        dimensionAndMesasures[i-1].propGroupLabel;
+        if(olabel!=label || dimensionAndMesasures.length==i) {
+          o.push({label:olabel, size:size});
+          size = 1;
+        }
+        else {
+          size++;
+        }
+        olabel = label;
+      }
+
+      return o;
+    }
+
+    var htmlGroupLabelRow = function(headers) {
+
+      var tr = document.createElement("TR");
+
+      var list = groupLabelHeader();
+
+      if(list===null) return null;
+
+      for(var i=0; i<list.length; i++) {
+        var td = document.createElement("TH");
+        td.appendChild(document.createTextNode(list[i].label));
+        tr.appendChild(td);
+        td.colSpan = list[i].size*2;
+        $(td).addClass("group_label_container");
+      }
+
+      return tr;
+    }
+
+    var htmlTable = function() {
       var table = document.createElement("TABLE");
+      return table;
+    }
+
+    var htmlDataTableHeader = function(headers,callback,table) {
+
 
       //Draw header
       var tr = document.createElement("TR");
@@ -159,7 +216,6 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
         tr.appendChild(th);
       }
 
-      return table;
     };
 
     var htmlControlPanelHeader = function() {
@@ -223,8 +279,14 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
       rootDiv.style.height = canvasHeight+"px";
       //rootDiv.style.overflowY = "scroll";
 
-      var table = htmlDataTableHeader(getHeaders(),callback);
+      var table = htmlTable();
+      var groupLabelRow = htmlGroupLabelRow(getHeaders());
+      if(groupLabelRow!==null) table.appendChild(groupLabelRow);
+      htmlDataTableHeader(getHeaders(),callback,table);
+
       var totalsRow = htmlTotalsRow();
+
+
       table.appendChild(totalsRow);
       table.style.width = (canvasWidth-20)+"px";
       rootDiv.appendChild(table);
