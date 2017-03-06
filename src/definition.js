@@ -1,7 +1,7 @@
 define( [], function () {
   'use strict';
 
-    var Definition = function(defaultPageSize,defaultPageHandler,defaultDisableSortWhenOnHeaderClick,defaultDisableSortArrow,defaultDisableColResize,defaultDisableSelectValues,disableGroupLabel) {
+    var Definition = function(defaultPageSize,defaultPageHandler,defaultEnableSortWhenOnHeaderClick,defaultEnableSortArrow,defaultEnableColResize,defaultEnableSelectValues,disableGroupLabel) {
 
       var defGroupLabel = {
         type: "string",
@@ -27,96 +27,59 @@ define( [], function () {
             appearance: {
               uses: "settings",
               items: {
-                showStyleSettings: {
-                  ref: "props.showStyleSettings",
-                  component: "switch",
-                  type: "boolean",
-                  label: "Show Style Settings",
-                  options: [{
-                    value: true,
-                    label: "Show"
-                  }, {
-                    value: false,
-                    label: "Hide"
-                  }],
-                  defaultValue: true
+
+                aheader: {
+                  items: {
+
+                    showStyleSettings: {
+                      ref: "props.showStyleSettings",
+                      component: "checkbox",
+                      type: "boolean",
+                      label: "Show style settings",
+                      defaultValue: false
+                    },
+
+                    enableColResize: {
+                      ref: "props.enableColResize",
+                      component: "checkbox",
+                      type: "boolean",
+                      label: "Enable column resizer",
+                      defaultValue: defaultEnableColResize
+                    },
+
+                    enableSortWhenOnHeaderClick: {
+                      ref: "props.enableSortWhenOnHeaderClick",
+                      component: "checkbox",
+                      label: "Enable sort on header click",
+                      type: "boolean",
+                      defaultValue: defaultEnableSortWhenOnHeaderClick
+                    },
+                    enableSortArrow: {
+                      ref: "props.enableSortArrow",
+                      label: "Enable sort arrow",
+                      component: "checkbox",
+                      type: "boolean",
+                      defaultValue: defaultEnableSortArrow
+                    },
+
+                    enableSelectValues: {
+                      ref: "props.enableSelectValues",
+                      component: "checkbox",
+                      type: "boolean",
+                      label: "Enable Select values",
+                      defaultValue: defaultEnableSelectValues
+                    },
+                    numberOfRowsPerPage: {
+                      type: "integer",
+                      label: "Number of Rows per Page",
+                      ref: "props.numberOfRowsPerPage",
+                      defaultValue: defaultPageSize
+                    },
+
+                  },
+                  label: "StyleTable specific",
+                  type: "items"
                 },
-                disableColResize: {
-                  ref: "props.disableColResize",
-                  component: "switch",
-                  type: "boolean",
-                  label: "Disable Column resizer",
-                  options: [{
-                    value: true,
-                    label: "Disable"
-                  }, {
-                    value: false,
-                    label: "Enable"
-                  }],
-                  defaultValue: true
-                },
-                disableSelectValues: {
-                  ref: "props.disableSelectValues",
-                  component: "switch",
-                  type: "boolean",
-                  label: "Disable Select values",
-                  options: [{
-                    value: true,
-                    label: "Disable"
-                  }, {
-                    value: false,
-                    label: "Enable"
-                  }],
-                  defaultValue: defaultDisableSelectValues
-                },
-                numberOfRowsPerPage: {
-                  type: "integer",
-                  label: "Number of Rows per Page",
-                  ref: "props.numberOfRowsPerPage",
-                  defaultValue: defaultPageSize
-                },
-                pageHandler: {
-                  type: "integer",
-                  component: "switch",
-                  label: "Page handler",
-                  ref: "props.pageHandler",
-                  defaultValue: defaultPageHandler,
-                  options: [{
-                    value: 2,
-                    label: "Paginator"
-                  }, {
-                    value: 1,
-                    label: "Scroll down"
-                  }],
-                },
-                disableSortWhenOnHeaderClick: {
-                  ref: "props.disableSortWhenOnHeaderClick",
-                  component: "switch",
-                  label: "Disable sort on header click",
-                  type: "boolean",
-                  options: [{
-                    value: true,
-                    label: "Disable"
-                  }, {
-                    value: false,
-                    label: "Enable"
-                  }],
-                  defaultValue: defaultDisableSortWhenOnHeaderClick
-                },
-                disableSortArrow: {
-                  ref: "props.disableSortArrow",
-                  label: "Hide sort arrow",
-                  component: "switch",
-                  type: "boolean",
-                  options: [{
-                    value: true,
-                    label: "Hide"
-                  }, {
-                    value: false,
-                    label: "Show"
-                  }],
-                  defaultValue: defaultDisableSortArrow
-                }
               }
             }
           }

@@ -407,7 +407,13 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
       }
       if(styleSetting.color) td.style.borderRight = "0";
 
+      if(!belowRowController) {
+        if(styleSetting.border) td.style.borderBottom = "1px solid #000";
       }
+      else {
+        if(styleBelow && styleBelow.border) td.style.borderBottom = "0";
+      }
+    }
 
     if(styleSetting.border === true) {
     tds[0].style.borderLeft = "1px solid #000";

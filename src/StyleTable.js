@@ -8,17 +8,17 @@ define( ["./Main","text!./css/style.css","./definition"],
     // Settings
     var defaultPageSize = 10;
     var defaultPageHandler = 1;
-    var defaultDisableSortWhenOnHeaderClick = true;
-    var defaultDisableSortArrow = true;
-    var defaultDisableColResize = true;
-    var defaultDisableSelectValues = true;
+    var defaultEnableSortWhenOnHeaderClick = false;
+    var defaultEnableSortArrow = false;
+    var defaultEnableColResize = false;
+    var defaultEnableSelectValues = false;
     var disableGroupLabel = false;
 
     return {
       initialProperties : {
         selectionMode : "CONFIRM"
       },
-      "definition": Definition(defaultPageSize,defaultPageHandler,defaultDisableSortWhenOnHeaderClick,defaultDisableSortArrow,defaultDisableColResize,defaultDisableSelectValues,disableGroupLabel),
+      "definition": Definition(defaultPageSize,defaultPageHandler,defaultEnableSortWhenOnHeaderClick,defaultEnableSortArrow,defaultEnableColResize,defaultEnableSelectValues,disableGroupLabel),
       support: {
         export: true,
         exportData: true
@@ -28,32 +28,30 @@ define( ["./Main","text!./css/style.css","./definition"],
         var _this = this;
         return new Promise(function(resolve,reject){
 
-            var main = new Main(_this.backendApi,$element, layout,!layout.props.showStyleSettings,_this);
-            
-            var rowPerPage = layout.props.numberOfRowsPerPage===undefined ? defaultPageSize : layout.props.numberOfRowsPerPage;
-            var pageHandler = layout.props.pageHandler===undefined ? defaultPageHandler : layout.props.pageHandler;
-            var disableSortWhenOnHeaderClick = layout.props.disableSortWhenOnHeaderClick===undefined ? defaultDisableSortWhenOnHeaderClick : layout.props.disableSortWhenOnHeaderClick;
-            var disableSortArrow = layout.props.disableSortArrow===undefined ? defaultDisableSortArrow : layout.props.disableSortArrow;
-            var disableColResize = layout.props.disableColResize===undefined ? defaultDisableColResize : layout.props.disableColResize;
-            var disableSelectValues = layout.props.disableSelectValues===undefined ? defaultDisableSelectValues : layout.props.disableSelectValues;
+          var main = new Main(_this.backendApi,$element, layout,!layout.props.showStyleSettings,_this);
 
-            if(!disableSelectValues) main.enableSelectOnValues();
-            if(!disableColResize) main.enableDragResizeColumn();
-            if(!disableSortWhenOnHeaderClick) main.enableSortWhenOnHeaderClick();
-            if(!disableSortArrow) main.enableSortArrow();
+          var rowPerPage = layout.props.numberOfRowsPerPage===undefined ? defaultPageSize : layout.props.numberOfRowsPerPage;
+          var pageHandler = layout.props.pageHandler===undefined ? defaultPageHandler : layout.props.pageHandler;
+          var enableSortWhenOnHeaderClick = layout.props.enableSortWhenOnHeaderClick===undefined ? defaultEnableSortWhenOnHeaderClick : layout.props.enableSortWhenOnHeaderClick;
+          var enableSortArrow = layout.props.enableSortArrow===undefined ? defaultEnableSortArrow : layout.props.enableSortArrow;
+          var enableColResize = layout.props.enableColResize===undefined ? defaultEnableColResize : layout.props.enableColResize;
+          var enableSelectValues = layout.props.enableSelectValues===undefined ? defaultEnableSelectValues : layout.props.enableSelectValues;
 
-            if(pageHandler===1) {
-              main.scrollMode(rowPerPage);
-            }
-            else {
-              throw "Invalid page handler: "+layout.props.pageHandler;
-            }    
+          if(enableSelectValues) main.enableSelectOnValues();
+          if(enableColResize) main.enableDragResizeColumn();
+          if(enableSortWhenOnHeaderClick) main.enableSortWhenOnHeaderClick();
+          if(enableSortArrow) main.enableSortArrow();
 
-            setTimeout(function(){ resolve(); },100);
-            
-            
+          if(pageHandler===1) {
+            main.scrollMode(rowPerPage);
+          }
+          else {
+            throw "Invalid page handler: "+layout.props.pageHandler;
+          }
+
+          setTimeout(function(){ resolve(); },100);
         });
-        
+
       }
     };
 });
