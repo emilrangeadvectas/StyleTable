@@ -4,13 +4,14 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
   var Main = function(backendApi,$element,layout,hideControlls,self) {
 
     var self = self;
+    var _this = this;
     var backendApi = backendApi;
     var $element = $element;
     var layout = layout;
-    var styleSettings = new StyleSettings(backendApi);
+    var styleSettings = new StyleSettings(backendApi,layout);
     var hideControlls = hideControlls;
     var rows = new Array();
-    var colResizeManager = new ColResizeManager(backendApi);
+    var colResizeManager = new ColResizeManager(backendApi,layout);
     var isEnableSortWhenOnHeaderClick = false;
     var isEnableSortArrow = false;
     var isEnableSelectOnValues = false;
@@ -97,8 +98,8 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
           var tdController = htmlStyleControlPanel(function(controlPanel){
             callback(controlPanel,i);
           },[0,1]);
-          tr.append(tdController);
-          tr.append(document.createElement("TD"));
+          tr.appendChild(tdController);
+          tr.appendChild(document.createElement("TD"));
         }
       return tr;
     }
@@ -229,6 +230,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
       var tr = document.createElement("TR");
       for(var u=0; u<rowData.length; u++) {
         var td = document.createElement("TD");
+//        td.appendChild(document.createTextNode(""));
         var td2 = document.createElement("TD");
         $(td2).addClass("columnSpace");
         td2.style.padding=0;
@@ -303,6 +305,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
     selectedValuesHandler.click(dimIndex,rowIndex,span);
     };
 
+
     var setSort = function(i) {
 
     backendApi.getProperties().then(function(reply){
@@ -314,6 +317,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
     reply.qHyperCubeDef.qInterColumnSortOrder = n;
     backendApi.setProperties(reply);
     });
+
     };
 
     var getNumberOfDimensions = function() {
@@ -502,9 +506,21 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
         qHeight: height
       }];
 
+      /*
+      if(_this.dataStack.hasPages()) {
+
+      }
+      else {
+        callbackWhenDone(0,true);
+        return;
+      }*/
+
       // first, get data from backend api and build and append html rows based on data...
-      backendApi.getData( requestPages ).then( function ( dataPages ) {
-        if( dataPages.length!==1 ) throw "can only draw one data page at a time";
+
+      _this.dataStack.pop( function(dataPages,isNoMoreData) {
+//      backendApi.getData( requestPages ).then( function ( dataPages ) {
+
+        if( dataPages.length!==1 ) throw "can only draw one data page at a time "+dataPages.length;
         var dataPage = dataPages[0];
         //console.log(dataPage);
         var trs = getDataRows(dataPage); // build html row based on data
@@ -543,7 +559,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
 
         var qArea = dataPage.qArea;
         var nextTop = qArea.qTop+qArea.qHeight;
-        var isNoMoreData = qArea.qHeight===0;
+      //  var isNoMoreData = qArea.qHeight===0;
         callbackWhenDone(nextTop,isNoMoreData);
       });
     }
@@ -577,6 +593,38 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
         callback(rootDivAndTable,styleSettingsMap);
       });
     };
+
+    this.oneFetch = function(rowsPerPage) {
+
+      redraw($element,layout,function(elements,styleSettingsMap) {
+
+        var top = 0; // from what index to fetch data next
+
+          requestAndDrawData(top,rowsPerPage,elements.table,function(next,end) {
+
+            for(var i=0; i<columns.length; i++) {
+              columns[i].updateStyle();
+            }
+
+            // update style on the new rows. (TODO: now it is all rows. Fix so only required rows are update (all new and the last before them))
+            for(var i=0; i<rows.length; i++) {
+              rows[i].updateStyle();
+            }
+
+            selectedValuesHandler.refresh();
+
+          },styleSettingsMap,function(dataRow){
+
+            for(var i=0; i<colResizeElements.length; i++) {
+              return;
+              var width = getPixelWidthByTextLength(dataRow.qMatrixRow[i].qText.length);
+              colResizeElements[i].expandDefaultWidth(width);
+            }
+
+          });
+
+      });
+    }
 
     // Sets Main to works as "Scroll mode" (load data while scroll down)
     this.scrollMode = function(rowsPerPage) {

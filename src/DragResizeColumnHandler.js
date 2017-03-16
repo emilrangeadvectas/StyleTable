@@ -1,7 +1,7 @@
 define( [], function () {
   'use strict';
 
-  var ColResizeManager = function(backendApi) {
+  var ColResizeManager = function(backendApi,layout) {
 
     var _this = this;
 
@@ -9,8 +9,9 @@ define( [], function () {
 
       var widths = null;
       var _widthDataContainer = this;
-      backendApi.getProperties().then(function(r){
-        var colwidth = r.colwidth;
+
+        var colwidth = JSON.parse(layout.props.colWidth);
+
         if(colwidth===undefined) {
           widths = {};
         }
@@ -24,12 +25,12 @@ define( [], function () {
           value = parseInt(value);
           if(value<10) return;
           widths[key] = value;
-          backendApi.applyPatches([ {"qPath":"/colwidth","qOp":"add","qValue":JSON.stringify(widths)} ],false);
+          backendApi.applyPatches([ {"qPath":"/props/colWidth","qOp":"add","qValue":JSON.stringify(JSON.stringify(widths))} ],false);
         }
         _widthDataContainer.get = function(key) {
           return widths[key];
         }
-      });
+
     }
 
     var widthDataContainer = new WidthDataContainer();

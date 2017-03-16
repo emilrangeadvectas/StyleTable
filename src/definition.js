@@ -75,6 +75,18 @@ define( [], function () {
                       ref: "props.numberOfRowsPerPage",
                       defaultValue: defaultPageSize
                     },
+                    styleSettings: {
+                      type: "string",
+                      label: "StyleSettings (JSON)",
+                      ref: "props.styleSettings",
+                      defaultValue: "{}"
+                    },
+                    colWidth: {
+                      type: "string",
+                      label: "Column widths (JSON)",
+                      ref: "props.colWidth",
+                      defaultValue: "{}"
+                    },
 
                   },
                   label: "StyleTable specific",
