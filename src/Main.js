@@ -1,7 +1,7 @@
-define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHandler","./SelectedValuesHandler"], function (StyleSettings,ScrolldownHandler,$,ColResizeManager,SelectedValuesHandler) {
+define( ["./StyleSettings","./ScrolldownHandler","./DataFromBackend", "jquery","./DragResizeColumnHandler","./SelectedValuesHandler"], function (StyleSettings,ScrolldownHandler,DataFromBackend,$,ColResizeManager,SelectedValuesHandler) {
   'use strict';
 
-  var Main = function(backendApi,$element,layout,hideControlls,self) {
+  var Main = function(backendApi,$element,layout,hideControlls,self,rowPerPage) {
 
     var self = self;
     var _this = this;
@@ -18,6 +18,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
     var isEnableDragResizeColumn = false;
     var columns = new Array();
     var colResizeElements = new Array();
+    this.dataStack = new DataFromBackend(backendApi,rowPerPage,layout);
 
     var getPixelWidthByTextLength = function(textLength) {
       return textLength*8+5;
@@ -230,7 +231,7 @@ define( ["./StyleSettings","./ScrolldownHandler", "jquery","./DragResizeColumnHa
       var tr = document.createElement("TR");
       for(var u=0; u<rowData.length; u++) {
         var td = document.createElement("TD");
-//        td.appendChild(document.createTextNode(""));
+        //td.appendChild(document.createTextNode(""));
         var td2 = document.createElement("TD");
         $(td2).addClass("columnSpace");
         td2.style.padding=0;
