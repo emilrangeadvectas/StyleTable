@@ -43,10 +43,10 @@ define( ["./Main","text!./css/_style.css","./definition"],
           if(enableSortArrow) main.enableSortArrow();
 
           if(_this.backendApi.getProperties) {
-            main.scrollMode(rowPerPage);
+            main.scrollMode();
           }
           else {
-            main.oneFetch(rowPerPage);
+            main.oneFetch();
           }
           setTimeout(function(){ resolve(); },1000);
         });

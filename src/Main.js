@@ -231,7 +231,7 @@ define( ["./StyleSettings","./ScrolldownHandler","./DataFromBackend", "jquery","
       var tr = document.createElement("TR");
       for(var u=0; u<rowData.length; u++) {
         var td = document.createElement("TD");
-        //td.appendChild(document.createTextNode(""));
+//        td.appendChild(document.createTextNode(""));
         var td2 = document.createElement("TD");
         $(td2).addClass("columnSpace");
         td2.style.padding=0;
@@ -499,31 +499,14 @@ define( ["./StyleSettings","./ScrolldownHandler","./DataFromBackend", "jquery","
       row.updateStyle();
     }
 
-    var requestAndDrawData = function(top,height,table,callbackWhenDone,styleSettingsMap,eachDataRowCallback) {
-      var requestPages = [{
-        qTop: top,
-        qLeft: 0,
-        qWidth: getHeaders().length, //TODO: figure oout if this is the correct way to view all columns
-        qHeight: height
-      }];
+    var requestAndDrawData = function(table,callbackWhenDone,styleSettingsMap,eachDataRowCallback) {
 
-      /*
-      if(_this.dataStack.hasPages()) {
-
-      }
-      else {
-        callbackWhenDone(0,true);
-        return;
-      }*/
-
-      // first, get data from backend api and build and append html rows based on data...
-
-      _this.dataStack.pop( function(dataPages,isNoMoreData) {
-//      backendApi.getData( requestPages ).then( function ( dataPages ) {
+      // first, get data from datastack and build and append html rows based on data...
+      _this.dataStack.pop( function(dataPages,isNoMoreData,top) {
 
         if( dataPages.length!==1 ) throw "can only draw one data page at a time "+dataPages.length;
         var dataPage = dataPages[0];
-        //console.log(dataPage);
+
         var trs = getDataRows(dataPage); // build html row based on data
         for(var i=0; i<trs.length; i++) {
           var tr = trs[i].tr;
@@ -558,10 +541,7 @@ define( ["./StyleSettings","./ScrolldownHandler","./DataFromBackend", "jquery","
           rows[globalRowIndex] = row;  // save all row controllers at global
         }
 
-        var qArea = dataPage.qArea;
-        var nextTop = qArea.qTop+qArea.qHeight;
-      //  var isNoMoreData = qArea.qHeight===0;
-        callbackWhenDone(nextTop,isNoMoreData);
+        if(!isNoMoreData) callbackWhenDone();
       });
     }
 
@@ -595,35 +575,35 @@ define( ["./StyleSettings","./ScrolldownHandler","./DataFromBackend", "jquery","
       });
     };
 
+    var drawAndAndFunctionality = function(elements,styleSettingsMap,callback){
+      requestAndDrawData(elements.table,function() {
+
+        for(var i=0; i<columns.length; i++) {
+          columns[i].updateStyle();
+        }
+
+        // update style on the new rows. (TODO: now it is all rows. Fix so only required rows are update (all new and the last before them))
+        for(var i=0; i<rows.length; i++) {
+          rows[i].updateStyle();
+        }
+
+        selectedValuesHandler.refresh();
+        if(callback!==undefined) callback();
+
+      },styleSettingsMap,function(dataRow){
+
+        for(var i=0; i<colResizeElements.length; i++) {
+          var width = getPixelWidthByTextLength(dataRow.qMatrixRow[i].qText.length);
+          colResizeElements[i].expandDefaultWidth(width);
+        }
+
+      });
+    }
+
     this.oneFetch = function(rowsPerPage) {
 
       redraw($element,layout,function(elements,styleSettingsMap) {
-
-        var top = 0; // from what index to fetch data next
-
-          requestAndDrawData(top,rowsPerPage,elements.table,function(next,end) {
-
-            for(var i=0; i<columns.length; i++) {
-              columns[i].updateStyle();
-            }
-
-            // update style on the new rows. (TODO: now it is all rows. Fix so only required rows are update (all new and the last before them))
-            for(var i=0; i<rows.length; i++) {
-              rows[i].updateStyle();
-            }
-
-            selectedValuesHandler.refresh();
-
-          },styleSettingsMap,function(dataRow){
-
-            for(var i=0; i<colResizeElements.length; i++) {
-              return;
-              var width = getPixelWidthByTextLength(dataRow.qMatrixRow[i].qText.length);
-              colResizeElements[i].expandDefaultWidth(width);
-            }
-
-          });
-
+        drawAndAndFunctionality(elements,styleSettingsMap);
       });
     }
 
@@ -632,35 +612,9 @@ define( ["./StyleSettings","./ScrolldownHandler","./DataFromBackend", "jquery","
 
       redraw($element,layout,function(elements,styleSettingsMap) {
 
-        var top = 0; // from what index to fetch data next
-
         // Handle scrolldown
         var scrolldownHandler = new ScrolldownHandler(elements.rootDiv,function(callback) { // defines function to be called when scrollhander tells it is time to fetch more data to table. call callback when data have been fetched
-
-          requestAndDrawData(top,rowsPerPage,elements.table,function(next,end) {
-            top = next;  // keep track of what "index"(top) to get data from next
-            callback(end); // tell scrollhandler that data have been fetch and drawn. (it is now secure(thread safe) for scrollhandler to call fetch adn draw more data)
-            // param end. Tells if there are no more data to be fecth
-
-            for(var i=0; i<columns.length; i++) {
-              columns[i].updateStyle();
-            }
-
-            // update style on the new rows. (TODO: now it is all rows. Fix so only required rows are update (all new and the last before them))
-            for(var i=0; i<rows.length; i++) {
-              rows[i].updateStyle();
-            }
-
-            selectedValuesHandler.refresh();
-
-          },styleSettingsMap,function(dataRow){
-
-            for(var i=0; i<colResizeElements.length; i++) {
-              var width = getPixelWidthByTextLength(dataRow.qMatrixRow[i].qText.length);
-              colResizeElements[i].expandDefaultWidth(width);
-            }
-
-          });
+          drawAndAndFunctionality(elements,styleSettingsMap,callback);
         });
       });
     }
