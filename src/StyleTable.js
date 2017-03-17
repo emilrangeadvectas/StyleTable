@@ -26,10 +26,11 @@ define( ["./Main","text!./css/_style.css","./definition"],
       paint: function ( $element, layout ) {
 
         var _this = this;
+        console.log(layout);
         return new Promise(function(resolve,reject){
 
           var rowPerPage = layout.props.numberOfRowsPerPage===undefined ? defaultPageSize : layout.props.numberOfRowsPerPage;
-          var main = new Main(_this.backendApi,$element, layout,!layout.props.showStyleSettings,_this,rowPerPage);
+          var main = new Main(_this.backendApi,$element, layout,!layout.props.showStyleSettings,_this);
 
           var pageHandler = layout.props.pageHandler===undefined ? defaultPageHandler : layout.props.pageHandler;
           var enableSortWhenOnHeaderClick = layout.props.enableSortWhenOnHeaderClick===undefined ? defaultEnableSortWhenOnHeaderClick : layout.props.enableSortWhenOnHeaderClick;
@@ -43,10 +44,10 @@ define( ["./Main","text!./css/_style.css","./definition"],
           if(enableSortArrow) main.enableSortArrow();
 
           if(_this.backendApi.getProperties) {
-            main.scrollMode();
+            main.scrollMode(rowPerPage);
           }
           else {
-            main.oneFetch();
+            main.oneFetch(rowPerPage);
           }
           setTimeout(function(){ resolve(); },1000);
         });

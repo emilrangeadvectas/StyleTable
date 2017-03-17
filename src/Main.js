@@ -1,7 +1,7 @@
 define( ["./StyleSettings","./ScrolldownHandler","./DataFromBackend", "jquery","./DragResizeColumnHandler","./SelectedValuesHandler"], function (StyleSettings,ScrolldownHandler,DataFromBackend,$,ColResizeManager,SelectedValuesHandler) {
   'use strict';
 
-  var Main = function(backendApi,$element,layout,hideControlls,self,rowPerPage) {
+  var Main = function(backendApi,$element,layout,hideControlls,self) {
 
     var self = self;
     var _this = this;
@@ -18,7 +18,7 @@ define( ["./StyleSettings","./ScrolldownHandler","./DataFromBackend", "jquery","
     var isEnableDragResizeColumn = false;
     var columns = new Array();
     var colResizeElements = new Array();
-    this.dataStack = new DataFromBackend(backendApi,rowPerPage,layout);
+    this.dataStack = new DataFromBackend(backendApi,layout);
 
     var getPixelWidthByTextLength = function(textLength) {
       return textLength*8+5;
@@ -176,6 +176,8 @@ define( ["./StyleSettings","./ScrolldownHandler","./DataFromBackend", "jquery","
         });
       }
 
+      var sortArrow = getSortArrow();
+
       for(var i=0; i<headers.length; i++) {
         var th = document.createElement("TH");
         var tdColResize = document.createElement("TH");
@@ -183,9 +185,11 @@ define( ["./StyleSettings","./ScrolldownHandler","./DataFromBackend", "jquery","
 
         var textHeader = document.createTextNode(headers[i]);
 
-        if(isEnableSortArrow && getCurrentSort()[0]===i) {
+        if(isEnableSortArrow && sortArrow.index===i) {
           var img = document.createElement("IMG");
-          img.src = "/extensions/StyleTable/img/arrow.png";
+          var src = "/extensions/StyleTable/img/arrow.png";
+          img.src = src;
+          if(!sortArrow.down) img.style.transform="rotate(180deg)";
           th.appendChild(img);
         }
 
@@ -231,7 +235,7 @@ define( ["./StyleSettings","./ScrolldownHandler","./DataFromBackend", "jquery","
       var tr = document.createElement("TR");
       for(var u=0; u<rowData.length; u++) {
         var td = document.createElement("TD");
-//        td.appendChild(document.createTextNode(""));
+        //td.appendChild(document.createTextNode(""));
         var td2 = document.createElement("TD");
         $(td2).addClass("columnSpace");
         td2.style.padding=0;
@@ -302,6 +306,33 @@ define( ["./StyleSettings","./ScrolldownHandler","./DataFromBackend", "jquery","
     return layout.qHyperCube.qEffectiveInterColumnSortOrder;
     };
 
+    var getSortArrow = function() {
+
+      var index = getCurrentSort()[0];
+
+
+      var numberOfDimensions = getNumberOfDimensions();
+      var isMeasure = index > numberOfDimensions-1;
+      var measureOffset = numberOfDimensions;
+
+      var sortIndicator = null;
+
+      if(isMeasure) {
+        var u = index-measureOffset;
+        sortIndicator = layout.qHyperCube.qMeasureInfo[u].qSortIndicator;
+      }
+      else {
+        var u = index;
+        sortIndicator = layout.qHyperCube.qDimensionInfo[u].qSortIndicator;
+      }
+
+
+      var r = new Object();
+      r.index = index;
+      r.down = sortIndicator === "D";
+      return r;
+    }
+
     var switchValues = function(dimIndex,rowIndex,span) {
     selectedValuesHandler.click(dimIndex,rowIndex,span);
     };
@@ -309,16 +340,50 @@ define( ["./StyleSettings","./ScrolldownHandler","./DataFromBackend", "jquery","
 
     var setSort = function(i) {
 
-    backendApi.getProperties().then(function(reply){
+      backendApi.getProperties().then(function(reply) {
 
-    var n = reply.qHyperCubeDef.qInterColumnSortOrder;
-    var index = n.indexOf(i);
-    if(index>-1) n.splice(index,1);
-    n.unshift(i);
-    reply.qHyperCubeDef.qInterColumnSortOrder = n;
-    backendApi.setProperties(reply);
-    });
 
+        var newInterColumnSortOrder = reply.qHyperCubeDef.qInterColumnSortOrder.slice(0);
+
+        var index = newInterColumnSortOrder.indexOf(i);
+        if(index>-1) newInterColumnSortOrder.splice(index,1);
+        newInterColumnSortOrder.unshift(i);
+
+        var compare1 = newInterColumnSortOrder;
+        var compare2 = reply.qHyperCubeDef.qInterColumnSortOrder;
+        var interColumnSortOrderChanged = !(compare1.length==compare2.length && compare1.every(function(a,b) { return a === compare2[b]}))
+        var doReverseOrder = !interColumnSortOrderChanged; // if column order not been changed we can assume clicked on same header and then a reverse order on that column should happen
+
+        reply.qHyperCubeDef.qInterColumnSortOrder = newInterColumnSortOrder;
+
+        if(doReverseOrder) {
+          var numberOfDimensions = getNumberOfDimensions();
+          var isMeasure = i > numberOfDimensions-1;
+          var measureOffset = numberOfDimensions;
+
+          if(isMeasure) {
+            var u = i-measureOffset;
+            if(reply.qHyperCubeDef.qMeasures[u].qSortBy["qSortByAscii"]===-1) reply.qHyperCubeDef.qMeasures[u].qSortBy["qSortByAscii"] = 1;
+            else if(reply.qHyperCubeDef.qMeasures[u].qSortBy["qSortByAscii"]===1) reply.qHyperCubeDef.qMeasures[u].qSortBy["qSortByAscii"] = -1;
+            if(reply.qHyperCubeDef.qMeasures[u].qSortBy["qSortByNumeric"]===-1) reply.qHyperCubeDef.qMeasures[u].qSortBy["qSortByNumeric"] = 1;
+            else if(reply.qHyperCubeDef.qMeasures[u].qSortBy["qSortByNumeric"]===1) reply.qHyperCubeDef.qMeasures[u].qSortBy["qSortByNumeric"] = -1;
+            if(reply.qHyperCubeDef.qMeasures[u].qSortBy["qSortByLoadOrder"]===-1) reply.qHyperCubeDef.qMeasures[u].qSortBy["qSortByLoadOrder"] = 1;
+            else if(reply.qHyperCubeDef.qMeasures[u].qSortBy["qSortByLoadOrder"]===1) reply.qHyperCubeDef.qMeasures[u].qSortBy["qSortByLoadOrder"] = -1;
+          }
+          else {
+            var u = i;
+            if(reply.qHyperCubeDef.qDimensions[u].qDef.qSortCriterias[0]["qSortByAscii"]===1) reply.qHyperCubeDef.qDimensions[u].qDef.qSortCriterias[0]["qSortByAscii"] = -1;
+            else if(reply.qHyperCubeDef.qDimensions[u].qDef.qSortCriterias[0]["qSortByAscii"]===-1) reply.qHyperCubeDef.qDimensions[u].qDef.qSortCriterias[0]["qSortByAscii"] = 1;
+            if(reply.qHyperCubeDef.qDimensions[u].qDef.qSortCriterias[0]["qSortByNumeric"]===1) reply.qHyperCubeDef.qDimensions[u].qDef.qSortCriterias[0]["qSortByNumeric"] = -1;
+            else if(reply.qHyperCubeDef.qDimensions[u].qDef.qSortCriterias[0]["qSortByNumeric"]===-1) reply.qHyperCubeDef.qDimensions[u].qDef.qSortCriterias[0]["qSortByNumeric"] = 1;
+            if(reply.qHyperCubeDef.qDimensions[u].qDef.qSortCriterias[0]["qSortByLoadOrder"]===1) reply.qHyperCubeDef.qDimensions[u].qDef.qSortCriterias[0]["qSortByLoadOrder"] = -1;
+            else if(reply.qHyperCubeDef.qDimensions[u].qDef.qSortCriterias[0]["qSortByLoadOrder"]===-1) reply.qHyperCubeDef.qDimensions[u].qDef.qSortCriterias[0]["qSortByLoadOrder"] = 1;
+          }
+        }
+
+
+        backendApi.setProperties(reply);
+      });
     };
 
     var getNumberOfDimensions = function() {
@@ -499,10 +564,10 @@ define( ["./StyleSettings","./ScrolldownHandler","./DataFromBackend", "jquery","
       row.updateStyle();
     }
 
-    var requestAndDrawData = function(table,callbackWhenDone,styleSettingsMap,eachDataRowCallback) {
+    var requestAndDrawData = function(table,callbackWhenDone,styleSettingsMap,eachDataRowCallback,numOfRows) {
 
       // first, get data from datastack and build and append html rows based on data...
-      _this.dataStack.pop( function(dataPages,isNoMoreData,top) {
+      _this.dataStack.pop( numOfRows,function(dataPages,isNoMoreData,top) {
 
         if( dataPages.length!==1 ) throw "can only draw one data page at a time "+dataPages.length;
         var dataPage = dataPages[0];
@@ -575,7 +640,8 @@ define( ["./StyleSettings","./ScrolldownHandler","./DataFromBackend", "jquery","
       });
     };
 
-    var drawAndAndFunctionality = function(elements,styleSettingsMap,callback){
+    var drawAndAndFunctionality = function(elements,styleSettingsMap,callback,numOfRows){
+
       requestAndDrawData(elements.table,function() {
 
         for(var i=0; i<columns.length; i++) {
@@ -597,24 +663,22 @@ define( ["./StyleSettings","./ScrolldownHandler","./DataFromBackend", "jquery","
           colResizeElements[i].expandDefaultWidth(width);
         }
 
-      });
+      },numOfRows);
     }
 
-    this.oneFetch = function(rowsPerPage) {
-
+    this.oneFetch = function(numberOfRows) {
+      //var numberOfRows = parseInt($element.innerHeight()/50);
       redraw($element,layout,function(elements,styleSettingsMap) {
-        drawAndAndFunctionality(elements,styleSettingsMap);
+        drawAndAndFunctionality(elements,styleSettingsMap,function(){},numberOfRows);
       });
     }
 
     // Sets Main to works as "Scroll mode" (load data while scroll down)
     this.scrollMode = function(rowsPerPage) {
-
       redraw($element,layout,function(elements,styleSettingsMap) {
-
         // Handle scrolldown
         var scrolldownHandler = new ScrolldownHandler(elements.rootDiv,function(callback) { // defines function to be called when scrollhander tells it is time to fetch more data to table. call callback when data have been fetched
-          drawAndAndFunctionality(elements,styleSettingsMap,callback);
+          drawAndAndFunctionality(elements,styleSettingsMap,callback,rowsPerPage);
         });
       });
     }

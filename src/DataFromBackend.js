@@ -1,13 +1,13 @@
 define( [], function () {
   'use strict';
 
-  var DataFromBackend = function(backendApi,rowPerPage,layout) {
+  var DataFromBackend = function(backendApi,layout) {
 
     this.pages = [];
     var _this = this;
     var top = 0;
 
-    this.pop = function(callback) {
+    this.pop = function(rowPerPage,callback) {
 
 
       var hc = layout.qHyperCube;
