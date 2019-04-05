@@ -5,5 +5,10 @@
     "type" : "visualization",
     "version": "0.1.3",
     "preview" : "",
-    "author": ""
+    "author": "Emil",
+    "bundle": {
+        "id": "a-extensions",
+        "name": "A",
+        "description": "'a' is a placeholder name"
+    }
 }
